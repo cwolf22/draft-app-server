@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3030;
 
 console.log(`Node ENV: ${process.env.NODE_ENV}`)
 const corsOrigin = [/baitingsheep\.com/]

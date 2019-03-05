@@ -18,3 +18,4 @@ mochawesome-report/
 CRON_ENABLED
 history/
 firebase-account.json
+app/config/index.js

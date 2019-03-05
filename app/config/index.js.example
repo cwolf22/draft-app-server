@@ -1,0 +1,12 @@
+export default {
+    secrets: {
+        FIREBASE: {
+            databaseURL: "something.firebaseio.com",
+            credential: {
+                type: "service_account",
+                ...
+            }
+          },
+        JWT: "secret"
+    }
+}

@@ -1,18 +1,15 @@
 import express from 'express';
 import admin from "firebase-admin";
-
+import config from './config'
 import unsecured from './routes/unsecured';
 //import auth from './routes/secured/auth';
 import AuthenticationMiddleware from './middleware/AuthenticationMiddleware';
 
 const app = express();
 
-const serviceAccount = require('./services/firebase-account.json')
-
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://drafter-60f92.firebaseio.com"
-
+  credential: admin.credential.cert(config.secrets.FIREBASE.credential),
+  databaseURL: config.secrets.FIREBASE.databaseURL
 });
 app.use('/',  unsecured);
 //app.use('/users', AuthenticationMiddleware, auth);

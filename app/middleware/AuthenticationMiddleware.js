@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import config from '../config'
 
 let checkToken = (req, res, next) => {
     let token = req.headers['x-access-token'] || req.headers['authorization']; // Express headers are auto converted to lowercase
@@ -11,8 +12,7 @@ let checkToken = (req, res, next) => {
             message: 'Auth token is not supplied'
         });
     }
-    //MOVE AWAY SECRET
-    jwt.verify(token, 'config-secret', (err, decoded) => {
+    jwt.verify(token, config.secrets.JWT, (err, decoded) => {
         if (err) {
           return res.json({
             success: false,

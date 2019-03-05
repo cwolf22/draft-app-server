@@ -1,6 +1,7 @@
 import express from 'express';
 import admin from 'firebase-admin';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken'
 
 const router = express.Router();
 
@@ -10,16 +11,17 @@ router.get('/ping', (req, res) => {
       .then(() => res.json({good: "ok"}))
       .catch((err) => res.status(500).json({error: err}))
 });
+//TODO: create a real config secret
 router.put('/register', (req, res) => {
-    console.log('Register')
-    console.log(req.body);
-    const email = req.body.email;
+    console.log(`Registering user: ${req.body.email}`)
     const hash = bcrypt.hashSync(req.body.password, 10);
-    console.log(`Password Hash: ${hash}`)
     const users = admin.firestore().collection("users");
-    users.doc(email).set({ email: email, hash: hash})
-      .then(resp => res.json({data:resp}))
-      .catch(err => res.status(500).json({error: err}));
+    users.doc(req.body.email).set({ email: req.body.email, hash: hash})
+      .then(resp => {
+        const token = jwt.sign({ email: req.body.email, hash: hash},'config-secret', { expiresIn: '24h' });
+        console.log(`Sending JWT back ${token}`);
+        res.json({data:{ response: resp, token: token } });
+      }).catch(err => res.status(500).json({error: err}));
 });
 router.post('/login', (req, res) => {
     const storedHash = '' //getStoredHash

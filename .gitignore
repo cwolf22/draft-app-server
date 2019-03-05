@@ -16,3 +16,5 @@ subapps/endpoints/public
 coverage/
 mochawesome-report/
 CRON_ENABLED
+history/
+firebase-account.json

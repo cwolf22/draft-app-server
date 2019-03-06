@@ -6,9 +6,12 @@ const AuthService = () => {
         register: (email, password) => new Promise((resolve, reject) => {
             const hash = bcrypt.hashSync(password, 10);
             const users = admin.firestore().collection("users");
-            users.doc(email).set({email, hash})
-            .then(() => resolve(hash))
-            .catch(err => reject({status:500, error: err}));
+            users.doc(email).set({email, hash, ts: admin.firestore.Timestamp.fromDate(new Date()) })
+                .then(() => resolve(hash))
+                .catch(err => {
+                    console.log(err)
+                    reject({status:500, error: err})
+                });
         }),
         login: (email, password) => new Promise((resolve, reject) => {
             const users = admin.firestore().collection("users");

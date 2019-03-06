@@ -20,6 +20,6 @@ app.use(cors({
 app.use(require('morgan')('dev'));
 app.use(bodyParser.json({limit: '100mb'}));
 app.use(bodyParser.urlencoded({limit: '100mb', extended: false}));
-app.use('/bs/v1/drafter', require('./app/App'))
+app.use('/bs/v1/drafter', require('./app'))
 
 app.listen(port, () => console.log('We are live on ' + port));

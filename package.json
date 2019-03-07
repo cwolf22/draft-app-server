@@ -26,7 +26,8 @@
     "firebase": "^5.8.5",
     "firebase-admin": "^7.0.0",
     "jsonwebtoken": "^8.5.0",
-    "morgan": "^1.9.1"
+    "morgan": "^1.9.1",
+    "puppeteer": "^1.13.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",

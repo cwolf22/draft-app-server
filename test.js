@@ -78,7 +78,7 @@ axios.options(URL, null, config).then(data => {
     console.log(uuid('730c6c14-4a79-46f6-9ebf-c9ab5eca8c1b'));
     console.log(uuid('9091063c-5d32-4768-9986-67a208ac6948'))
   //  console.log(err.response)
-    console.log(err.response.data.error)
+    console.log(err.response.data)
 })
 /*
 var xmlHttp = new XMLHttpRequest();

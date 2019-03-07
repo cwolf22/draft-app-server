@@ -6,7 +6,13 @@ const LeagueService = () => {
         getAPI: (type, sport) => new Promise((resolve, reject) => {
             switch(type) {
                 case 'ESPN':
+                try {
+                    console.log("returning new espn api")
                     resolve(new EspnAPI());
+                } catch (err) {
+                    console.log(err);
+                    reject(err)
+                }
                     break;
                 case 'CBS':
                     resolve(new CbsAPI());

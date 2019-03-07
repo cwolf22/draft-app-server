@@ -2,9 +2,21 @@ import express from 'express';
 import jwt from 'jsonwebtoken'
 import AuthService from '../services/AuthService'
 import config from '../config'
+import LeagueService from '../services/LeagueService';
 
 const router = express.Router();
+const leagueService = new LeagueService();
 const authService = new AuthService();
+router.get('/espntest' , (req, res) => {
+  console.log('testing')
+  leagueService.getAPI('ESPN')
+    .then(api => {
+      console.log(api);
+      return api.import()
+    })
+    .then(json => res.json(json))
+    .catch(err => res.status(500).json({ERROR: 'ERRORR'}))
+});
 
 router.put('/register', (req, res) => {
     console.log(`Registering user: ${req.body.email}`);

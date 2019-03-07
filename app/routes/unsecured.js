@@ -7,15 +7,13 @@ import LeagueService from '../services/LeagueService';
 const router = express.Router();
 const leagueService = new LeagueService();
 const authService = new AuthService();
+
 router.get('/espntest' , (req, res) => {
   console.log('testing')
-  leagueService.getAPI('ESPN')
-    .then(api => {
-      console.log(api);
-      return api.import()
-    })
-    .then(json => res.json(json))
-    .catch(err => res.status(500).json({ERROR: 'ERRORR'}))
+  leagueService.login('cliffhanger178', 'hilliard1','ESPN')
+    .then(profile => res.json(profile.leagues))
+    //.then(json => res.json(json))
+    .catch(err => res.status(500).json({ERROR: err}))
 });
 
 router.put('/register', (req, res) => {

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 export default class EspnProfile {
 
+    //http://fantasy.espn.com/apis/v3/games/flb/seasons/2019/segments/0/leagues/<LEAGUE_ID>?view=mRoster
     static urls = {
         v3: { base: `http://fantasy.espn.com/apis/v3/games/flb/seasons/${new Date().getFullYear()}/segments/0/leagues/` },
         v2_fan: { 
@@ -18,7 +19,7 @@ export default class EspnProfile {
         this.leagues = {}
     }
 
-    load() {
+    load(sport) {
         console.log(`[espn api] - loading profile from cookies`);
         return new Promise((resolve, reject) => {
             if (!this.isAuthenticated) {
@@ -28,8 +29,9 @@ export default class EspnProfile {
             const url = `${EspnProfile.urls.v2_fan.base}${this.cookies.swid.value}?${EspnProfile.urls.v2_fan.params}`;
             axios.get(url, { headers: { Cookie: `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`}})
                 .then(response => {
-                    this.parseResponse(response.data)
-                    resolve(this)
+                    this.parseResponse(response.data, sport)
+                        .then((profile) => resolve(profile))
+                        .catch(err => {throw err})
                 })
                 .catch(error => {
                     console.log(error);
@@ -38,10 +40,41 @@ export default class EspnProfile {
         });
     }
 
-    parseResponse(json = { preferences: []}) {
-        console.log('parsing json')
-        json.preferences
-        this.leagues = json
+    parseResponse(json = { preferences: []}, sport) {
+        return new Promise((resolve, reject) => {
+            const actions = json.preferences.filter(obj => obj.metaData.entry.abbrev == sport)
+                .map(resp => {
+                    const entry = resp.metaData.entry;
+                    const url = `${EspnProfile.urls.v3.base}${entry.groups[0].groupId}?view=mRoster`;
+                    console.log(`making league request: ${url}`)
+                    return axios.get(url, { headers: { 
+                        Cookie: `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`},
+                        teamId: entry.entryId,
+                        teamName: `${entry.entryLocation} ${entry.entryNickname}`,
+                        leagueId: entry.groups[0].groupId,
+                        leagueName: entry.groups[0].groupName
+                    });
+                })
+            Promise.all(actions).then(arr => {
+                const leagues = arr.map(response => {
+                    const config = response.config
+                    console.log(config)
+                    return {
+                        league: {
+                            id: config.leagueId,
+                            name: config.leagueName
+                        },
+                        team: {
+                            id: config.teamId,
+                            name: config.teamName
+                        },
+                        teams: response.data.teams
+                    }
+                });
+                this.leagues = leagues;
+                resolve(this);
+            });
+        });
     }
 
     collectLeagus() {

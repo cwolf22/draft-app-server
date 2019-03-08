@@ -16,13 +16,13 @@ export default class LeagueService {
         console.log("[LeagueService] - instantiated")
     }
 
-    login(uname, pass, type) {
+    login(uname, pass, type, sport) {
         return new Promise((resolve, reject) => {
             try {
                 switch(type.toUpperCase()) {
                     case 'ESPN':
                         this.espnLogin(uname, pass)
-                            .then(profile => profile.load())
+                            .then(profile => profile.load('FLB'))
                             .then(profile => resolve(profile))
                             .catch(err => {throw err});
                         break;
@@ -56,7 +56,7 @@ export default class LeagueService {
                     console.log('[espn] - Submitting Form...');
                     await Promise.all([
                         myframe.click(LeagueService.espn.login.submitSelector, {waitUntil : 'networkidle0'}),
-                        page.waitForNavigation( {timeout: 10000 }),
+                        page.waitForNavigation( {timeout: 15000 }),
                     ]);
                 } catch (err) {
                     console.log('[espn] - Login Failure');

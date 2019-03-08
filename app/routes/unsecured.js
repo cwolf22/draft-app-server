@@ -14,7 +14,6 @@ router.get('/espntest' , (req, res) => {
   const type = 'ESPN'
   const user = 'chriswolf@fastmail.com'
   leagueService.login('cliffhanger178', 'hilliard1', type, sport)
-    //.then(profile => res.json(profile.leagues))
     .then(profile => leagueService.storeLeagues(user, profile, type, sport))
     .then(league => res.json(league))
     .catch(err => res.status(500).json({ERROR: err}))

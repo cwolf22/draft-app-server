@@ -2,11 +2,10 @@ import jwt from 'jsonwebtoken'
 import config from '../config'
 
 export default (req, res, next) => {
-  console.log('Executing Auth Middleware')
+  console.log('Executing Auth Middleware');
     let token = req.headers['x-access-token'] || req.headers['authorization'];
     if (token.startsWith('Bearer ')) token = token.slice(7, token.length);
 
-    console.log(`Token: ${token}`)
     if (!token) {
         return res.status(401).json({
             success: false,

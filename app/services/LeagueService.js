@@ -19,14 +19,14 @@ export default class LeagueService {
     login(uname, pass, type, sport) {
         return new Promise((resolve, reject) => {
             try {
-                switch(type.toUpperCase()) {
-                    case 'ESPN':
+                switch(type) {
+                    case 'espn':
                         this.espnLogin(uname, pass)
                             .then(profile => profile.load(sport))
                             .then(profile => resolve(profile))
                             .catch(err => {throw err});
                         break;
-                    case 'CBS':
+                    case 'cbs':
                         resolve(new CbsAPI());
                         break;
                     default:

@@ -4,11 +4,12 @@ import LeagueService from '../../services/LeagueService';
 const router = express.Router();
 const leagueService = new LeagueService();
 
-router.put('/:user/:sport', (req, res) => {
-  console.log("adding league");
-  leagueService.login('cliffhanger178', 'hilliard1','ESPN')
-    //.then(profile => res.json(profile.leagues))
-    .then(profile => LeagueService.storeLeagues(profile))
+router.post('/:user/:sport', (req, res) => {
+  console.log(`Import: [${req.params.user}] - ${req.params.sport}`)
+  const sport = req.body.sport.toLowerCase();
+  const type = req.body.type.toLowerCase();
+  leagueService.login(req.body.username, req.body.password, type, sport)
+    .then(profile => leagueService.storeLeagues(req.params.user, profile, type, sport))
     .then(league => res.json(league))
     .catch(err => res.status(500).json({ERROR: err}))
 });

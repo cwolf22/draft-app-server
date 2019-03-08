@@ -4,16 +4,16 @@ import LeagueService from '../../services/LeagueService';
 const router = express.Router();
 const leagueService = new LeagueService();
 
-router.get('/:email', (req, res) => {
-  console.log("getting leagues");
-});
-router.put('/:email', (req, res) => {
+router.put('/:user/:sport', (req, res) => {
   console.log("adding league");
-  leagueService.getApi(req.body.type, req.body.sport)
-    //.then(api => api.connect(req.body))
-    .then(leagueService.store(req.body))
-    .then(resp => res.json(resp))
-    .catch(err => res.status(err.status).json(err));
+  leagueService.login('cliffhanger178', 'hilliard1','ESPN')
+    //.then(profile => res.json(profile.leagues))
+    .then(profile => LeagueService.storeLeague(profile))
+    .then(league => res.json(league))
+    .catch(err => res.status(500).json({ERROR: err}))
+});
+router.get('/users/:user', (req, res) => {
+  console.log("getting leagues");
 });
 router.get('/:sport/:id', (req, res) => {
     

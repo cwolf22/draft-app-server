@@ -22,7 +22,7 @@ export default class LeagueService {
                 switch(type.toUpperCase()) {
                     case 'ESPN':
                         this.espnLogin(uname, pass)
-                            .then(profile => profile.load('FLB'))
+                            .then(profile => profile.load(sport))
                             .then(profile => resolve(profile))
                             .catch(err => {throw err});
                         break;
@@ -56,7 +56,7 @@ export default class LeagueService {
                     console.log('[espn] - Submitting Form...');
                     await Promise.all([
                         myframe.click(LeagueService.espn.login.submitSelector, {waitUntil : 'networkidle0'}),
-                        page.waitForNavigation( {timeout: 15000 }),
+                        page.waitForNavigation( {timeout: 30000 }),
                     ]);
                 } catch (err) {
                     console.log('[espn] - Login Failure');
@@ -78,17 +78,67 @@ export default class LeagueService {
             });
         });
     }
+
+    storeLeagues(user, profile, type, sport) {
+        const leagues = profile.leagues[sport];
+        console.log(`[LeagueService] - storing ${leagues.length} ${sport} leagues`)
+        return new Promise((resolve, reject) => {
+            try {
+                leagues.forEach(league => {
+                    this.storeLeague(user, league, type, sport)
+                        .then(() => this.updateUser(user, league, type, sport))
+                        .catch(err => {throw err});
+                })
+                resolve(profile.leagues);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+    
+    storeLeague(user, league, type, sport) {
+        try {
+            const metaId = league.meta.id.toString();
+            const db = admin.firestore().collection(`leagues/${sport}/${type}`);
+            const batch = admin.firestore().batch();
+            batch.set(db.doc(metaId), {
+                ts: admin.firestore.Timestamp.fromDate(new Date()),
+                id: league.meta.id,
+                name: league.meta.name,
+                importBy: user
+            });
+            const teamsDb = db.doc(metaId).collection('teams');
+            league.teams.forEach(team => {
+                const tdoc = teamsDb.doc(team.id.toString());
+                batch.set(tdoc, { 
+                    ts: admin.firestore.Timestamp.fromDate(new Date()),
+                    id: team.id
+                }); 
+                team.roster.entries.forEach(player =>{
+                    const pmeta = player.playerPoolEntry.player;
+                    const pdoc = tdoc.collection('roster').doc(player.playerId.toString());
+                    batch.set(pdoc, {
+                        ts: admin.firestore.Timestamp.fromDate(new Date()),
+                        id: player.playerId,
+                        firstName: pmeta.firstName,
+                        lastName: pmeta.lastName,
+                        fullName: pmeta.fullName
+                    })
+                });
+            });
+            return batch.commit();   
+        } catch (err) {
+            return new Promise((resolve,reject) => reject(err));
+        } 
+    }
+
+    updateUser(user, league, type, sport) {
+        const db = admin.firestore().collection(`users/${user}/leagues/${sport}/${type}`);
+        return db.doc(league.meta.id.toString()).set({
+            ts: admin.firestore.Timestamp.fromDate(new Date()),
+            leagueId: league.meta.id,
+            teamId: league.team.id
+        });
+    }
 }
-        /*
-        store: (user, form) => new Promise((resolve, reject) => {
-            admin.firestore().collection("users").doc(user).collection('leagues').add({
-                sport: form.sport,
-                type: form.type,
-                leagueId: form.leagueId,
-                teamId: form.teamId,
-                ts: admin.firestore.Timestamp.fromDate(new Date())
-            })
-              .then( (resp) => resolve(resp))
-              .catch( (err) => reject({status: 500, error: err }))
-        }),
-        */
+

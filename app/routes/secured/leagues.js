@@ -8,7 +8,7 @@ router.put('/:user/:sport', (req, res) => {
   console.log("adding league");
   leagueService.login('cliffhanger178', 'hilliard1','ESPN')
     //.then(profile => res.json(profile.leagues))
-    .then(profile => LeagueService.storeLeague(profile))
+    .then(profile => LeagueService.storeLeagues(profile))
     .then(league => res.json(league))
     .catch(err => res.status(500).json({ERROR: err}))
 });

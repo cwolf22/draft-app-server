@@ -9,10 +9,14 @@ const leagueService = new LeagueService();
 const authService = new AuthService();
 
 router.get('/espntest' , (req, res) => {
-  console.log('testing')
-  leagueService.login('cliffhanger178', 'hilliard1','ESPN')
-    .then(profile => res.json(profile.leagues))
-    //.then(json => res.json(json))
+  console.log('espntest')
+  const sport = 'baseball'
+  const type = 'ESPN'
+  const user = 'chriswolf@fastmail.com'
+  leagueService.login('cliffhanger178', 'hilliard1', type, sport)
+    //.then(profile => res.json(profile.leagues))
+    .then(profile => leagueService.storeLeagues(user, profile, type, sport))
+    .then(league => res.json(league))
     .catch(err => res.status(500).json({ERROR: err}))
 });
 

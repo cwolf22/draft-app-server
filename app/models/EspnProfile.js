@@ -10,6 +10,10 @@ export default class EspnProfile {
             params: `displayEvents=true&displayNow=true&displayRecs=true&recLimit=5&userId=%7BB89096F2-E5B9-4541-A5E3-6BC80F22D56E%7D&context=fantasy&source=espncom-fantasy&lang=en&section=espn&region=us`
         }
     }
+    static sportMapping = {
+        baseball: 'FLB',
+        football: 'FLL'
+    }
 
     constructor(_cookies = {}) {
         this.cookies = {
@@ -41,8 +45,10 @@ export default class EspnProfile {
     }
 
     parseResponse(json = { preferences: []}, sport) {
+        const abbrev = EspnProfile.sportMapping[sport];
+        console.log(`Parse response for and find sports ${abbrev}`)
         return new Promise((resolve, reject) => {
-            const actions = json.preferences.filter(obj => obj.metaData.entry.abbrev == sport)
+            const actions = json.preferences.filter(obj => obj.metaData.entry.abbrev == abbrev)
                 .map(resp => {
                     const entry = resp.metaData.entry;
                     const url = `${EspnProfile.urls.v3.base}${entry.groups[0].groupId}?view=mRoster`;
@@ -58,9 +64,8 @@ export default class EspnProfile {
             Promise.all(actions).then(arr => {
                 const leagues = arr.map(response => {
                     const config = response.config
-                    console.log(config)
                     return {
-                        league: {
+                        meta: {
                             id: config.leagueId,
                             name: config.leagueName
                         },
@@ -71,7 +76,7 @@ export default class EspnProfile {
                         teams: response.data.teams
                     }
                 });
-                this.leagues = leagues;
+                this.leagues[sport] = leagues;
                 resolve(this);
             });
         });

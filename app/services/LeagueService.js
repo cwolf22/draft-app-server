@@ -24,7 +24,7 @@ export default class LeagueService {
                         this.espnLogin(uname, pass)
                             .then(profile => profile.load(sport))
                             .then(profile => resolve(profile))
-                            .catch(err => {throw err});
+                            .catch(err => reject(err));
                         break;
                     case 'cbs':
                         resolve(new CbsAPI());
@@ -34,6 +34,7 @@ export default class LeagueService {
                         break;
                 }
             } catch (err) {
+                console.log("rejecting hurr")
                 console.log(err);
                 reject({status: 500, error:err})
             }
@@ -56,11 +57,10 @@ export default class LeagueService {
                     console.log('[espn] - Submitting Form...');
                     await Promise.all([
                         myframe.click(LeagueService.espn.login.submitSelector, {waitUntil : 'networkidle0'}),
-                        page.waitForNavigation( {timeout: 30000 }),
+                        page.waitForNavigation( {timeout: 3000 }),
                     ]);
                 } catch (err) {
                     console.log('[espn] - Login Failure');
-                    console.log(err);
                     reject(err);
                     return;
                 }
@@ -112,7 +112,11 @@ export default class LeagueService {
                 const tdoc = teamsDb.doc(team.id.toString());
                 batch.set(tdoc, { 
                     ts: admin.firestore.Timestamp.fromDate(new Date()),
-                    id: team.id
+                    id: team.id,
+                    location: team.location,
+                    nickname: team.nickname,
+                    owners: team.owners,
+                    abbreviation: team.abbrev
                 }); 
                 team.roster.entries.forEach(player =>{
                     const pmeta = player.playerPoolEntry.player;
@@ -137,8 +141,8 @@ export default class LeagueService {
         return db.doc(league.meta.id.toString()).set({
             ts: admin.firestore.Timestamp.fromDate(new Date()),
             leagueId: league.meta.id,
-            teamId: league.team.id
-        });
+            teamId: league.team
+        }); 
     }
 }
 

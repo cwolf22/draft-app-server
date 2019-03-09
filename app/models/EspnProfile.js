@@ -3,11 +3,15 @@ import axios from 'axios';
 export default class EspnProfile {
 
     //http://fantasy.espn.com/apis/v3/games/flb/seasons/2019/segments/0/leagues/<LEAGUE_ID>?view=mRoster
+    //http://fantasy.espn.com/apis/v3/games/flb/seasons/2019/segments/0/leagues/2136?view=mRoster&view=modular&view=mNav
     static urls = {
-        v3: { base: `http://fantasy.espn.com/apis/v3/games/flb/seasons/${new Date().getFullYear()}/segments/0/leagues/` },
+        v3: { 
+            base: `http://fantasy.espn.com/apis/v3/games/flb/seasons/${new Date().getFullYear()}/segments/0/leagues/`,
+            params: 'view=mRoster&view=modular&view=mNav'
+        },
         v2_fan: { 
             base: `https://fan.api.espn.com/apis/v2/fans/`,
-            params: `displayEvents=true&displayNow=true&displayRecs=true&recLimit=5&userId=%7BB89096F2-E5B9-4541-A5E3-6BC80F22D56E%7D&context=fantasy&source=espncom-fantasy&lang=en&section=espn&region=us`
+            params: 'displayEvents=true&displayNow=true&displayRecs=true&recLimit=5&userId=%7BB89096F2-E5B9-4541-A5E3-6BC80F22D56E%7D&context=fantasy&source=espncom-fantasy&lang=en&section=espn&region=us'
         }
     }
     static sportMapping = {
@@ -51,29 +55,27 @@ export default class EspnProfile {
             const actions = json.preferences.filter(obj => obj.metaData.entry.abbrev == abbrev)
                 .map(resp => {
                     const entry = resp.metaData.entry;
-                    const url = `${EspnProfile.urls.v3.base}${entry.groups[0].groupId}?view=mRoster`;
+                    const url = `${EspnProfile.urls.v3.base}${entry.groups[0].groupId}?${EspnProfile.urls.v3.params}`;
                     console.log(`making league request: ${url}`)
                     return axios.get(url, { headers: { 
                         Cookie: `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`},
-                        teamId: entry.entryId,
-                        teamName: `${entry.entryLocation} ${entry.entryNickname}`,
-                        leagueId: entry.groups[0].groupId,
-                        leagueName: entry.groups[0].groupName
+                        teamId: entry.entryId
                     });
                 })
             Promise.all(actions).then(arr => {
                 const leagues = arr.map(response => {
-                    const config = response.config
+                    const teams = response.data.teams.map(team => {
+                        const owners = team.owners.map(ownerId => response.data.members.find(member => ownerId == member.id));    
+                        team.owners = owners;
+                        return team;
+                    })      
                     return {
                         meta: {
-                            id: config.leagueId,
-                            name: config.leagueName
+                            id: response.data.id,
+                            name: response.data.settings.name
                         },
-                        team: {
-                            id: config.teamId,
-                            name: config.teamName
-                        },
-                        teams: response.data.teams
+                        team: response.config.teamId,
+                        teams: teams
                     }
                 });
                 this.leagues[sport] = leagues;
@@ -81,6 +83,8 @@ export default class EspnProfile {
             });
         });
     }
+
+    findLeagueManager
 
     collectLeagus() {
 

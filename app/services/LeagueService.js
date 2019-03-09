@@ -57,7 +57,7 @@ export default class LeagueService {
                     console.log('[espn] - Submitting Form...');
                     await Promise.all([
                         myframe.click(LeagueService.espn.login.submitSelector, {waitUntil : 'networkidle0'}),
-                        page.waitForNavigation( {timeout: 3000 }),
+                        page.waitForNavigation( {timeout: 30000 }),
                     ]);
                 } catch (err) {
                     console.log('[espn] - Login Failure');

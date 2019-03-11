@@ -16,12 +16,51 @@ export default class LeagueService {
         console.log("[LeagueService] - instantiated")
     }
 
-    login(uname, pass, type, sport) {
+    getLeagues(user) {
+        return new Promise((resolve, reject) => {
+            console.log('[LeagueService] - get league for user')
+            let leagues = [];
+            const userLeaguesDb = admin.firestore().collection(`users/${user}/leagues/`);
+            userLeaguesDb.get()
+                .then(snapshot =>  snapshot.docs.map(doc => doc.data()) )
+                .then(userLeagues => {
+                    leagues = userLeagues;
+                    const actions = userLeagues.map(league => admin.firestore().doc(`leagues/${league.sport}/${league.type}/${league.leagueId}`).get() );
+                    return Promise.all(actions);
+                })
+                .then(docs => {
+                    const data = docs.map(doc => doc.data())
+                    const result = data.map(league => {
+                        const uleague = leagues.find(l => l.leagueId == league.id);
+                        return {
+                          ...league,
+                          type: uleague.type,
+                          sport: uleague.sport,
+                          teamId: uleague.teamId
+                        }
+                    });
+                    
+                    resolve(result);
+                })
+                .catch(err => {
+                    reject(err)
+                });
+
+    });
+            /*return db.doc(league.meta.id.toString()).set({
+            ts: admin.firestore.Timestamp.fromDate(new Date()),
+            leagueId: league.meta.id,
+            teamId: league.team
+        });
+        */
+    }
+
+    login(user, uname, pass, type, sport) {
         return new Promise((resolve, reject) => {
             try {
                 switch(type) {
                     case 'espn':
-                        this.espnLogin(uname, pass)
+                        this.espnAuthorize(user, uname, pass)
                             .then(profile => profile.load(sport))
                             .then(profile => resolve(profile))
                             .catch(err => reject(err));
@@ -41,7 +80,7 @@ export default class LeagueService {
         });
     }
 
-    espnLogin(uname, pass) {
+    espnAuthorize(user, uname, pass) {
         console.log(`[espn] - loginUser ${uname} : get login form...`);
         return new Promise((resolve, reject) => {
             puppeteer.launch().then(async browser => {
@@ -79,6 +118,10 @@ export default class LeagueService {
         });
     }
 
+    espnLogin() {
+
+    }
+
     storeLeagues(user, profile, type, sport) {
         const leagues = profile.leagues[sport];
         console.log(`[LeagueService] - storing ${leagues.length} ${sport} leagues`)
@@ -100,48 +143,47 @@ export default class LeagueService {
         try {
             const metaId = league.meta.id.toString();
             const db = admin.firestore().collection(`leagues/${sport}/${type}`);
-            const batch = admin.firestore().batch();
-            batch.set(db.doc(metaId), {
-                ts: admin.firestore.Timestamp.fromDate(new Date()),
-                id: league.meta.id,
-                name: league.meta.name,
-                importBy: user
-            });
-            const teamsDb = db.doc(metaId).collection('teams');
-            league.teams.forEach(team => {
-                const tdoc = teamsDb.doc(team.id.toString());
-                batch.set(tdoc, { 
-                    ts: admin.firestore.Timestamp.fromDate(new Date()),
-                    id: team.id,
-                    location: team.location,
-                    nickname: team.nickname,
-                    owners: team.owners,
-                    abbreviation: team.abbrev
-                }); 
-                team.roster.entries.forEach(player =>{
+            const teams = league.teams.map(team => {
+
+                const roster = team.roster.entries.map(player => {
                     const pmeta = player.playerPoolEntry.player;
-                    const pdoc = tdoc.collection('roster').doc(player.playerId.toString());
-                    batch.set(pdoc, {
-                        ts: admin.firestore.Timestamp.fromDate(new Date()),
+                    return {
                         id: player.playerId,
                         firstName: pmeta.firstName,
                         lastName: pmeta.lastName,
                         fullName: pmeta.fullName
-                    })
+                    }
                 });
+
+                return { 
+                    id: team.id,
+                    location: team.location,
+                    nickname: team.nickname,
+                    owners: team.owners,
+                    abbreviation: team.abbrev,
+                    roster
+                }
             });
-            return batch.commit();   
+            return db.doc(metaId).set({
+                ts: admin.firestore.Timestamp.fromDate(new Date()),
+                id: league.meta.id,
+                name: league.meta.name,
+                importBy: user,
+                teams
+            });  
         } catch (err) {
             return new Promise((resolve,reject) => reject(err));
         } 
     }
 
     updateUser(user, league, type, sport) {
-        const db = admin.firestore().collection(`users/${user}/leagues/${sport}/${type}`);
+        const db = admin.firestore().collection(`users/${user}/leagues/`);
         return db.doc(league.meta.id.toString()).set({
             ts: admin.firestore.Timestamp.fromDate(new Date()),
             leagueId: league.meta.id,
-            teamId: league.team
+            teamId: league.team,
+            sport,
+            type
         }); 
     }
 }

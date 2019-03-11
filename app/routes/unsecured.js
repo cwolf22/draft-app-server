@@ -19,6 +19,15 @@ router.get('/espntest' , (req, res) => {
     .catch(err => res.status(500).json({ERROR: err}))
 });
 
+router.get('/gettest' , (req, res) => {
+  console.log('gettest')
+  const user = 'chriswolf@fastmail.com';
+  const sport = 'baseball'
+  leagueService.getLeagues(user, sport)
+    .then(data => res.json(data))
+    .catch(err => res.status(500).json({ERROR: err}))
+});
+
 router.put('/register', (req, res) => {
     console.log(`Registering user: ${req.body.email}`);
     authService.register(req.body.email, req.body.password)

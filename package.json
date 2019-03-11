@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec babel-node index.js",
-    "build": "babel src -d dist"
+    "dev": "nodemon --exec babel-node ./bin/www",
+    "build": "babel src -d dist",
+    "start": "babel-node ./bin/www"
   },
   "repository": {
     "type": "git",

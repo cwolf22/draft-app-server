@@ -68,13 +68,14 @@ export default class EspnProfile {
                         const owners = team.owners.map(ownerId => response.data.members.find(member => ownerId == member.id));    
                         team.owners = owners;
                         return team;
-                    })      
+                    });
                     return {
                         meta: {
                             id: response.data.id,
                             name: response.data.settings.name
                         },
                         team: response.config.teamId,
+                        ownerId: this.cookies.swid.value,
                         teams: teams
                     }
                 });

@@ -36,7 +36,8 @@ export default class LeagueService {
                           ...league,
                           type: uleague.type,
                           sport: uleague.sport,
-                          teamId: uleague.teamId
+                          teamId: uleague.teamId,
+                          ownerId: uleague.ownerId
                         }
                     });
                     
@@ -118,10 +119,6 @@ export default class LeagueService {
         });
     }
 
-    espnLogin() {
-
-    }
-
     storeLeagues(user, profile, type, sport) {
         const leagues = profile.leagues[sport];
         console.log(`[LeagueService] - storing ${leagues.length} ${sport} leagues`)
@@ -182,6 +179,7 @@ export default class LeagueService {
             ts: admin.firestore.Timestamp.fromDate(new Date()),
             leagueId: league.meta.id,
             teamId: league.team,
+            ownerId: league.ownerId,
             sport,
             type
         }); 

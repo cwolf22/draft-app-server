@@ -84,7 +84,7 @@ export default class LeagueService {
     espnAuthorize(user, uname, pass) {
         console.log(`[espn] - loginUser ${uname} : get login form...`);
         return new Promise((resolve, reject) => {
-            puppeteer.launch().then(async browser => {
+            puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}).then(async browser => {
                 const page = await browser.newPage();
                 try {
                     await page.goto(LeagueService.espn.login.page, {waitUntil : 'networkidle0'});

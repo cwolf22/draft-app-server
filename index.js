@@ -6,7 +6,7 @@ import cors from 'cors';
 const app = express();
 
 console.log(`Node ENV: ${process.env.NODE_ENV}`)
-const corsOrigin = [/baitingsheep\.com/]
+const corsOrigin = [/baitingsheep\.com/, /ap\'baitingsheep\.com/]
 if (typeof(process.env.NODE_ENV) == 'undefined') corsOrigin.push(/localhost/)
 
 //ENABLE CORS

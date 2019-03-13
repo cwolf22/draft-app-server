@@ -6,7 +6,7 @@ const AuthService = () => {
         register: (email, password) => new Promise((resolve, reject) => {
             const hash = bcrypt.hashSync(password, 10);
             const users = admin.firestore().collection("users");
-            users.doc(email).set({email, hash, ts: admin.firestore.Timestamp.fromDate(new Date()) })
+            users.doc(email.toLowerCase()).set({email, hash, ts: admin.firestore.Timestamp.fromDate(new Date()) })
                 .then(() => resolve(hash))
                 .catch(err => {
                     console.log(err)
@@ -15,7 +15,7 @@ const AuthService = () => {
         }),
         login: (email, password) => new Promise((resolve, reject) => {
             const users = admin.firestore().collection("users");
-            users.doc(email).get()
+            users.doc(email.toLowerCase()).get()
               .then(doc => {
                   const hash = doc.get('hash');
                   if (hash && bcrypt.compareSync(password, hash)) resolve(hash);

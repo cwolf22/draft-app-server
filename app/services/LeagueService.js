@@ -20,7 +20,7 @@ export default class LeagueService {
         return new Promise((resolve, reject) => {
             console.log('[LeagueService] - get league for user')
             let leagues = [];
-            const userLeaguesDb = admin.firestore().collection(`users/${user}/leagues/`);
+            const userLeaguesDb = admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`);
             userLeaguesDb.get()
                 .then(snapshot =>  snapshot.docs.map(doc => doc.data()) )
                 .then(userLeagues => {
@@ -47,13 +47,7 @@ export default class LeagueService {
                     reject(err)
                 });
 
-    });
-            /*return db.doc(league.meta.id.toString()).set({
-            ts: admin.firestore.Timestamp.fromDate(new Date()),
-            leagueId: league.meta.id,
-            teamId: league.team
         });
-        */
     }
 
     login(user, uname, pass, type, sport) {
@@ -180,7 +174,7 @@ export default class LeagueService {
     }
 
     updateUser(user, league, type, sport) {
-        const db = admin.firestore().collection(`users/${user}/leagues/`);
+        const db = admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`);
         return db.doc(league.meta.id.toString()).set({
             ts: admin.firestore.Timestamp.fromDate(new Date()),
             leagueId: league.meta.id,

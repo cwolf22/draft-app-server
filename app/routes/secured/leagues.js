@@ -17,8 +17,18 @@ router.post('/:user/:sport', (req, res) => {
   const type = req.body.type.toLowerCase();
   leagueService.login(req.params.user, req.body.username, req.body.password, type, sport)
     .then(profile => leagueService.storeLeagues(req.params.user, profile, type, sport))
-    .then(league => res.json(league))
-    .catch(err => res.status(500).json({ERROR: err}))
+    .then(() => {
+      console.log('setting timeout')
+      setTimeout(() => {
+        console.log('in timeout')
+        leagueService.getLeagues(req.params.user)
+        .then(data => res.json(data))
+        .catch(err => res.status(500).json({ERROR: err}))
+      }, 1500)
+    })
+    .catch(err => res.status(500).json({ERROR: err}));
+    //TODO: REFACTOR THIS AND CRAETE LEAGUE MODEL
+  
 });
 router.get('/users/:user', (req, res) => {
   console.log("getting leagues");

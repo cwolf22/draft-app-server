@@ -1,29 +1,35 @@
-import admin from 'firebase-admin'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+import config from '../config'
 
-const AuthService = () => {
-    return {
-        register: (email, password) => new Promise((resolve, reject) => {
-            const hash = bcrypt.hashSync(password, 10);
-            const users = admin.firestore().collection("users");
-            users.doc(email.toLowerCase()).set({email, hash, ts: admin.firestore.Timestamp.fromDate(new Date()) })
-                .then(() => resolve(hash))
-                .catch(err => {
-                    console.log(err)
-                    reject({status:500, error: err})
-                });
-        }),
-        login: (email, password) => new Promise((resolve, reject) => {
-            const users = admin.firestore().collection("users");
-            users.doc(email.toLowerCase()).get()
-              .then(doc => {
-                  const hash = doc.get('hash');
-                  if (hash && bcrypt.compareSync(password, hash)) resolve(hash);
-                  reject({status: 401, message: 'Username or password is incorrect'});
-              })
-              .catch(err => reject({status:500, error: err}));
-        })
+export default class AuthService {
+    static instance;
+    
+    constructor(dbConnector) {
+        if (AuthService.instance) return AuthService.instance;
+
+        this.dbConnector = dbConnector;
+        AuthService.instance = this;
+    }
+
+    async register(user, password) {
+        console.log(`[AuthService :: ${user}] - Login`)
+        const hash = bcrypt.hashSync(password, 10);
+        await this.dbConnector.createUser(user, hash);
+        return hash;  
+    }
+
+    async login(user, password) {
+        console.log(`[AuthService :: ${user}] - Login`)
+        const document = await this.dbConnector.getUser(user);
+        const hash = document.get('hash');
+        if (hash && bcrypt.compareSync(password, hash)) return hash;
+
+        throw {status: 401, message: 'Username or password is incorrect'};
+    }
+
+    generateToken(email, hash) {
+        console.log(`[AuthService :: ${user}] - Generate JWT`)
+        return jwt.sign({ email, hash }, config.secrets.JWT, { expiresIn: '24h' });
     }
 }
-
-export default AuthService

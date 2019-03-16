@@ -1,47 +1,31 @@
 import express from 'express';
-import jwt from 'jsonwebtoken'
-import AuthService from '../services/AuthService'
-import config from '../config'
-import LeagueService from '../services/LeagueService';
+import AuthService from '../services/AuthService';
+import DBConnector from '../services/DBConnector';
 
 const router = express.Router();
-const leagueService = new LeagueService();
-const authService = new AuthService();
-
-router.get('/espntest' , (req, res) => {
-  console.log('espntest')
-  const sport = 'baseball'
-  const type = 'ESPN'
-  const user = 'chriswolf@fastmail.com'
-  leagueService.login('cliffhanger178', 'hilliard1', type, sport)
-    .then(profile => leagueService.storeLeagues(user, profile, type, sport))
-    .then(league => res.json(league))
-    .catch(err => res.status(500).json({ERROR: err}))
-});
-
-router.get('/gettest' , (req, res) => {
-  console.log('gettest')
-  const user = 'chriswolf@fastmail.com';
-  const sport = 'baseball'
-  leagueService.getLeagues(user, sport)
-    .then(data => res.json(data))
-    .catch(err => res.status(500).json({ERROR: err}))
-});
+const dbConnector = new DBConnector();
+const authService = new AuthService(dbConnector);
 
 router.put('/register', (req, res) => {
     console.log(`Registering user: ${req.body.email}`);
     authService.register(req.body.email, req.body.password)
       .then(hash => {
-        const token = jwt.sign({ email: req.body.email, hash }, config.secrets.JWT, { expiresIn: '24h' });
-        res.json({data:{ token } });
-      }).catch(err => res.status(500).json({error: err}));
+        const token = authService.generateToken(req.body.email, hash);
+        res.json({data:{ token } })
+      })
+      .catch(err => res.status(500).json({error: err}));
 });
+
 router.post('/login', (req, res) => {
     console.log(`Login user: ${req.body.email}`);
     authService.login(req.body.email, req.body.password)
       .then(hash => {
-        const token = jwt.sign({ email: req.body.email, hash }, config.secrets.JWT, { expiresIn: '24h' });
-        res.json({data:{ token } });
-      }).catch(err => res.status(err.status).json({error: err}));
-})
+        console.log(`hash: ${hash}`)
+        const token = authService.generateToken(req.body.email, hash);
+        console.log(token)
+        res.json({data:{ token } })
+      })
+      .catch(err => res.status(err.status).json({error: err}));
+});
+
 export default router;

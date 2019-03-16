@@ -27,69 +27,13 @@ export default class EspnProfile {
         this.leagues = {}
     }
 
-    load(sport) {
-        console.log(`[espn api] - loading profile from cookies`);
-        return new Promise((resolve, reject) => {
-            if (!this.isAuthenticated) {
-                reject("User Unauthenticated");
-                return;
-            }
-            const url = `${EspnProfile.urls.v2_fan.base}${this.cookies.swid.value}?${EspnProfile.urls.v2_fan.params}`;
-            axios.get(url, { headers: { Cookie: `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`}})
-                .then(response => {
-                    this.parseResponse(response.data, sport)
-                        .then((profile) => resolve(profile))
-                        .catch(err => {throw err})
-                })
-                .catch(error => {
-                    console.log(error);
-                    reject(error);
-                });
-        });
+    getCookieString() {
+        return `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`
     }
 
-    parseResponse(json = { preferences: []}, sport) {
-        const abbrev = EspnProfile.sportMapping[sport];
-        console.log(`Parse response for and find sports ${abbrev}`)
-        return new Promise((resolve, reject) => {
-            const actions = json.preferences.filter(obj => obj.metaData.entry.abbrev == abbrev)
-                .map(resp => {
-                    const entry = resp.metaData.entry;
-                    const url = `${EspnProfile.urls.v3.base}${entry.groups[0].groupId}?${EspnProfile.urls.v3.params}`;
-                    console.log(`making league request: ${url}`)
-                    return axios.get(url, { headers: { 
-                        Cookie: `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`},
-                        teamId: entry.entryId
-                    });
-                })
-            Promise.all(actions).then(arr => {
-                const leagues = arr.map(response => {
-                    const teams = response.data.teams.map(team => {
-                        const owners = team.owners.map(ownerId => response.data.members.find(member => ownerId == member.id));    
-                        team.owners = owners;
-                        return team;
-                    });
-                    return {
-                        meta: {
-                            id: response.data.id,
-                            name: response.data.settings.name
-                        },
-                        team: response.config.teamId,
-                        ownerId: this.cookies.swid.value,
-                        teams: teams
-                    }
-                });
-                this.leagues[sport] = leagues;
-                resolve(this);
-            });
-        });
-    }
-
-    findLeagueManager
-
-    collectLeagus() {
-
-    }
+    /****************
+     * P R I V A T E
+     */
 
     isAuthenticated() {
         return (!this.cookies.swid || !this.cookies.espn_s2)

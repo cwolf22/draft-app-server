@@ -1,8 +1,10 @@
 import express from 'express';
 import LeagueService from '../../services/LeagueService';
+import DBConnector from '../../services/DBConnector';
 
 const router = express.Router();
-const leagueService = new LeagueService();
+const dbConnector = new DBConnector();
+const leagueService = new LeagueService(dbConnector);
 
 router.get('/:user' , (req, res) => {
   console.log(`Get leagues for user: ${req.params.user}`)
@@ -29,9 +31,6 @@ router.post('/:user/:sport', (req, res) => {
     .catch(err => res.status(500).json({ERROR: err}));
     //TODO: REFACTOR THIS AND CRAETE LEAGUE MODEL
   
-});
-router.get('/users/:user', (req, res) => {
-  console.log("getting leagues");
 });
 
 export default router;

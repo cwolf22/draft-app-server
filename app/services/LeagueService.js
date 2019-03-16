@@ -1,81 +1,57 @@
 import admin from 'firebase-admin'
 import puppeteer from 'puppeteer'
 import EspnProfile from '../models/EspnProfile'
+import EspnAPI from './api/EspnAPI';
 
 export default class LeagueService {
-    static espn = {
-        login: {
-            page: 'https://www.espn.com/login/',
-            iframeDomain: 'registerdisney.go.com',
-            emailSelector: 'form input[type="email"]',
-            passwordSelector: 'form input[type="password"]',
-            submitSelector: 'form button[type="submit"]'
-        }
+    static instance;
+
+    constructor(dbConnector) {
+        if (LeagueService.instance) return LeagueService.instance;
+
+        this.dbConnector = dbConnector;
+        LeagueService.instance = this;
     }
-    constructor() {
-        console.log("[LeagueService] - instantiated")
+
+    login(uname, pass, type, sport) {
+        return new Promise((resolve, reject) => {
+        const api = getApi(type);
+            api.authorize(uname, pass)
+                .then(profile => api.loadLeagues(profile, sport))
+                .then(profile => resolve(profile))
+                .catch(err => reject(err));
+        });
     }
 
     getLeagues(user) {
         return new Promise((resolve, reject) => {
             console.log('[LeagueService] - get league for user')
             let leagues = [];
-            const userLeaguesDb = admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`);
-            userLeaguesDb.get()
-                .then(snapshot =>  snapshot.docs.map(doc => doc.data()) )
+            this.dbConnector.getUserLeagues(user)
                 .then(userLeagues => {
                     leagues = userLeagues;
-                    const actions = userLeagues.map(league => admin.firestore().doc(`leagues/${league.sport}/${league.type}/${league.leagueId}`).get() );
+                    const actions = userLeagues.map(league => this.dbConnector.getLeague(league) );
                     return Promise.all(actions);
                 })
-                .then(docs => {
-                    const data = docs.map(doc => doc.data())
+                .then(data => {
                     const result = data.map(league => {
-                        const uleague = leagues.find(l => l.leagueId == league.id);
+                        const userLgInfo = leagues.find(l => l.leagueId == league.id);
                         return {
                           ...league,
-                          type: uleague.type,
-                          sport: uleague.sport,
-                          teamId: uleague.teamId,
-                          ownerId: uleague.ownerId
+                          type: userLgInfo.type,
+                          sport: userLgInfo.sport,
+                          teamId: userLgInfo.teamId,
+                          ownerId: userLgInfo.ownerId
                         }
                     });
-                    
                     resolve(result);
                 })
-                .catch(err => {
-                    reject(err)
-                });
-
+                .catch(err => reject(err));
         });
     }
 
-    login(user, uname, pass, type, sport) {
-        return new Promise((resolve, reject) => {
-            try {
-                switch(type) {
-                    case 'espn':
-                        this.espnAuthorize(user, uname, pass)
-                            .then(profile => profile.load(sport))
-                            .then(profile => resolve(profile))
-                            .catch(err => reject(err));
-                        break;
-                    case 'cbs':
-                        resolve(new CbsAPI());
-                        break;
-                    default:
-                        reject({status: 500, error: `No API exists for type: ${type}`});
-                        break;
-                }
-            } catch (err) {
-                console.log("rejecting hurr")
-                console.log(err);
-                reject({status: 500, error:err})
-            }
-        });
-    }
-
-    espnAuthorize(user, uname, pass) {
+    
+    espnAuthorize(uname, pass) {
         console.log(`[espn] - loginUser ${uname} : get login form...`);
         return new Promise((resolve, reject) => {
             
@@ -183,6 +159,21 @@ export default class LeagueService {
             sport,
             type
         }); 
+    }
+
+    /*******************
+     * P R I V A T E
+     */
+
+    getApi(type) {
+        switch(type) {
+            case 'espn':
+                return new EspnAPI();
+            case 'cbs':
+                return new CbsAPI();
+            default:
+                return null;
+        }
     }
 }
 

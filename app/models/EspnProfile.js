@@ -19,10 +19,12 @@ export default class EspnProfile {
         football: 'FLL'
     }
 
-    constructor(_cookies = {}) {
+    constructor(user, cookies = {}) {
+        this.type = 'espn';
+        this.user = user;
         this.cookies = {
-            swid: _cookies.find(c => c.name == 'SWID'),
-            espn_s2: _cookies.find(c => c.name == 'espn_s2')
+            swid: cookies.find(c => c.name == 'SWID'),
+            espn_s2: cookies.find(c => c.name == 'espn_s2')
         }
         this.leagues = {}
     }

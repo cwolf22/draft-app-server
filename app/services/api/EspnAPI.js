@@ -2,6 +2,7 @@ import HTTPService from '../HTTPService'
 import puppeteer from 'puppeteer';
 import axios from 'axios';
 import EspnProfile from '../../models/EspnProfile';
+import League from '../../models/League';
 
 export default class EspnAPI {
     static instance;
@@ -30,9 +31,8 @@ export default class EspnAPI {
         football: 'FLL'
     }
     constructor() {
-        this.baseUri = `http://fantasy.espn.com/apis/v3/games/flb/seasons/${new Date().getFullYear()}/segments/0/leagues/`;
-        this.userUri = `https://fan.api.espn.com/apis/v2/fans/`
-        this.userUriParams = `displayEvents=true&displayNow=true&displayRecs=true&recLimit=5&userId=%7BB89096F2-E5B9-4541-A5E3-6BC80F22D56E%7D&context=fantasy&source=espncom-fantasy&lang=en&section=espn&region=us`
+        if (EspnAPI.instance) return EspnAPI.instance;
+        EspnAPI.instance = this;
     }
 
     authorize(user, pass) {
@@ -62,7 +62,7 @@ export default class EspnAPI {
                     try {
                         const cookies = await page.cookies();
                         console.log(`[espn] - Login Successful. Returning ${cookies.length} cookies`);
-                        const profile = new EspnProfile(cookies);
+                        const profile = new EspnProfile(user, cookies);
                         if (!profile.isAuthenticated) throw `[espn] - Unable to Authenticate ${user} through API`
                         resolve(profile)
                     } catch (err) {
@@ -91,6 +91,7 @@ export default class EspnAPI {
                     this.parseResponse(profile, response.data, sport)
                         .then((leagues) => {
                             profile.leagues[sport] = leagues;
+                            console.log(leagues);
                             resolve(profile);
                         })
                         .catch(err => {throw err})
@@ -123,15 +124,7 @@ export default class EspnAPI {
                         team.owners = owners;
                         return team;
                     });
-                    return {
-                        meta: {
-                            id: response.data.id,
-                            name: response.data.settings.name
-                        },
-                        team: response.config.teamId,
-                        ownerId: profile.cookies.swid.value,
-                        teams: teams
-                    }
+                    return new League(this.type, { data: response.data, config: response.config, ownerId, teams, user: profile.user });
                 });
                 resolve(leagues);
             });

@@ -14,12 +14,13 @@ export default class LeagueService {
     }
 
     login(uname, pass, type, sport) {
+        console.log(`[LeagueService :: ${uname}] - ${type} login`)
         return new Promise((resolve, reject) => {
-        const api = getApi(type);
-            api.authorize(uname, pass)
-                .then(profile => api.loadLeagues(profile, sport))
-                .then(profile => resolve(profile))
-                .catch(err => reject(err));
+        const api = this.getApi(type);
+        api.authorize(uname, pass)
+            .then(profile => api.loadLeagues(profile, sport))
+            .then(profile => resolve(profile))
+            .catch(err => reject(err));
         });
     }
 
@@ -51,15 +52,15 @@ export default class LeagueService {
     }
 
     storeLeagues(user, profile, sport) {
-        console.log(`[LeagueService] - storing ${leagues.length} ${sport} leagues`);
-        const leagues = profile.leagues[sport];
-        leagues.forEach(async league => {
+        console.log(`[LeagueService :: ${user}] - storing ${leagues.length} ${sport} leagues`);
+        profile.leagues.forEach(async league => {
             await this.storeLeague(user, league, profile.type, sport);
             await this.updateUser(user, league, profile.type, sport);
         })
         return profile.leagues;
     }
     
+    //UPDATE THIS
     storeLeague(user, league, type, sport) {
         try {
             const metaId = league.meta.id.toString();

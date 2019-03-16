@@ -63,8 +63,8 @@ export default class EspnAPI {
                         const cookies = await page.cookies();
                         console.log(`[espn] - Login Successful. Returning ${cookies.length} cookies`);
                         const profile = new EspnProfile(user, cookies);
-                        if (!profile.isAuthenticated) throw `[espn] - Unable to Authenticate ${user} through API`
-                        resolve(profile)
+                        if (!profile.isAuthenticated()) throw `[espn] - Unable to Authenticate ${user} through API`
+                        resolve(profile);
                     } catch (err) {
                         console.log('[espn] - Failure Fetching User Data');
                         console.log(err);
@@ -81,7 +81,7 @@ export default class EspnAPI {
     loadLeagues(profile, sport) {
         console.log(`[espn api] - loading profile from cookies`);
         return new Promise((resolve, reject) => {
-            if (!this.isAuthenticated()) {
+            if (!profile.isAuthenticated()) {
                 reject("User Unauthenticated");
                 return;
             }
@@ -90,8 +90,7 @@ export default class EspnAPI {
                 .then(response => {
                     this.parseResponse(profile, response.data, sport)
                         .then((leagues) => {
-                            profile.leagues[sport] = leagues;
-                            console.log(leagues);
+                            profile.leagues = leagues;
                             resolve(profile);
                         })
                         .catch(err => {throw err})
@@ -124,7 +123,14 @@ export default class EspnAPI {
                         team.owners = owners;
                         return team;
                     });
-                    return new League(this.type, { data: response.data, config: response.config, ownerId, teams, user: profile.user });
+                    return new League(profile.type, { 
+                        data: response.data, 
+                        config: response.config, 
+                        user: profile.user,
+                        ownerId: profile.cookies.swid.value, 
+                        teams, 
+                        sport 
+                    });
                 });
                 resolve(leagues);
             });

@@ -7,8 +7,6 @@ export default class League {
             this.name = options.data.settings.name,
             this.id = options.data.id
             this.importBy = options.user;
-            this.ownerId = options.ownerId;
-            this.teamId = options.config.teamId;
             this.sport = options.sport;
             this.teams = options.teams;
             break;

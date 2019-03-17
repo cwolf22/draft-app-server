@@ -26,7 +26,8 @@ export default class EspnProfile {
             swid: cookies.find(c => c.name == 'SWID'),
             espn_s2: cookies.find(c => c.name == 'espn_s2')
         }
-        this.leagues = []
+        this.leagues = [];
+        this.playerDetails = [];
     }
 
     getCookieString() {

@@ -20,7 +20,10 @@ router.post('/:user/:sport', (req, res) => {
   leagueService.login(req.body.username, req.body.password, type, sport)
     .then(profile => leagueService.storeLeagues(req.params.user, profile, sport))
     .then(data => res.json(data))
-    .catch(err => res.status(500).json({ERROR: err}));
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ERROR: err})}
+      );
 });
 
 export default router;

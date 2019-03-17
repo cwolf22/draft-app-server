@@ -23,6 +23,7 @@ export default class EspnAPI {
         },
         v2_fan: { 
             base: `https://fan.api.espn.com/apis/v2/fans/`,
+            //why is userid in this parameter
             params: 'displayEvents=true&displayNow=true&displayRecs=true&recLimit=5&userId=%7BB89096F2-E5B9-4541-A5E3-6BC80F22D56E%7D&context=fantasy&source=espncom-fantasy&lang=en&section=espn&region=us'
         }
     }
@@ -86,6 +87,7 @@ export default class EspnAPI {
                 return;
             }
             const url = `${EspnAPI.urls.v2_fan.base}${profile.cookies.swid.value}?${EspnAPI.urls.v2_fan.params}`;
+            console.log(`making request for fan data: ${url}`)
             axios.get(url, { headers: { Cookie: profile.getCookieString()}})
                 .then(response => {
                     this.parseResponse(profile, response.data, sport)
@@ -102,6 +104,7 @@ export default class EspnAPI {
         });
     }
 
+    //TODO: Clean this up
     parseResponse(profile, json = { preferences: []}, sport) {
         const abbrev = EspnAPI.sportMapping[sport];
         console.log(`Parse response for and find sports ${abbrev}`)
@@ -109,25 +112,24 @@ export default class EspnAPI {
             const actions = json.preferences.filter(obj => obj.metaData.entry.abbrev == abbrev)
                 .map(resp => {
                     const entry = resp.metaData.entry;
+                    profile.playerDetails.push({
+                        leagueId: entry.groups[0].groupId,
+                        ownerId: profile.cookies.swid.value,
+                        type: profile.type,
+                        teamId: entry.entryId,
+                        sport   
+                    })
                     const url = `${EspnAPI.urls.v3.base}${entry.groups[0].groupId}?${EspnAPI.urls.v3.params}`;
                     console.log(`making league request: ${url}`)
-                    return axios.get(url, { headers: { 
-                        Cookie: profile.getCookieString()},
-                        teamId: entry.entryId
-                    });
+                    return axios.get(url, { headers: { Cookie: profile.getCookieString()}});
                 })
             Promise.all(actions).then(arr => {
                 const leagues = arr.map(response => {
-                    const teams = response.data.teams.map(team => {
-                        const owners = team.owners.map(ownerId => response.data.members.find(member => ownerId == member.id));    
-                        team.owners = owners;
-                        return team;
-                    });
+                    const teams = response.data.teams.map(team => this.mapTeamData(team, response.data.members));
                     return new League(profile.type, { 
                         data: response.data, 
                         config: response.config, 
                         user: profile.user,
-                        ownerId: profile.cookies.swid.value, 
                         teams, 
                         sport 
                     });
@@ -135,5 +137,21 @@ export default class EspnAPI {
                 resolve(leagues);
             });
         });
+    }
+
+    mapTeamData(team, members) {
+            const owners = team.owners.map(ownerId => members.find(member => ownerId == member.id));    
+            const roster = team.roster.entries.map(player => {
+                const pmeta = player.playerPoolEntry.player;
+                return {
+                    id: player.playerId,
+                    firstName: pmeta.firstName,
+                    lastName: pmeta.lastName,
+                    fullName: pmeta.fullName
+                }
+            });
+            team.owners = owners;
+            team.roster = roster;
+            return team;
     }
 }

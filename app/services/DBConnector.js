@@ -15,26 +15,46 @@ export default class DBConnector {
     }
 
     createUser(user, hash) {
-        console.log(`[DBConnector] - Create User: ${user}`)
+        console.log(`[DBConnector] - Create User: ${user}`);
         const users = admin.firestore().collection("users");
         return users.doc(user.toLowerCase()).set({email:user, hash, ts: admin.firestore.Timestamp.fromDate(new Date()) })
     }
 
     getUser(user) {
-        console.log(`[DBConnector] - Get User: ${user}`)
+        console.log(`[DBConnector] - Get User: ${user}`);
         const users = admin.firestore().collection("users");
         return users.doc(user.toLowerCase()).get();
     }   
 
     async getUserLeagues(user) {
-        console.log(`[DBConnector] - Get User Leagues: ${user}`)
+        console.log(`[DBConnector] - Get User Leagues: ${user}`);
         const snapshot = await admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`).get();
         return snapshot.docs.map(doc => doc.data());
     }
 
     async getLeague(league) {
-        console.log(`[DBConnector] - Get League: ${league.sport}/${league.type}/${league.leagueId}`)
+        console.log(`[DBConnector] - Get League: ${league.sport}/${league.type}/${league.leagueId}`);
         const doc = await admin.firestore().doc(`leagues/${league.sport}/${league.type}/${league.leagueId}`).get();
         return doc.data();
+    }
+
+    storeLeague(league) {
+        console.log(`[DBConnector] - Store League: leagues/${league.sport}/${league.type}`);
+        const db = admin.firestore().collection(`leagues/${league.sport}/${league.type}`);
+            return db.doc(league.id.toString()).set({ ...league, ts: admin.firestore.Timestamp.fromDate(new Date()) });  
+    }
+
+    storeUserDetails(user, details) {
+        console.log(`[DBConnector] - Store League for User: users/${user.toLowerCase()}/leagues/`);
+        const db = admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`); 
+        return db.doc(details.leagueId.toString()).set({
+            ts: admin.firestore.Timestamp.fromDate(new Date()),
+            leagueId: details.leagueId,
+            teamId: details.teamId,
+            ownerId: details.ownerId,
+            sport: details.sport,
+            type: details.type
+        }); 
+
     }
 }

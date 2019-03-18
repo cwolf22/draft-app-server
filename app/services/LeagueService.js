@@ -1,7 +1,5 @@
-import admin from 'firebase-admin'
-import puppeteer from 'puppeteer'
-import EspnProfile from '../models/EspnProfile'
 import EspnAPI from './api/EspnAPI';
+import CbsAPI from './api/CbsAPI';
 
 export default class LeagueService {
     static instance;
@@ -17,7 +15,7 @@ export default class LeagueService {
         console.log(`[LeagueService :: ${uname}] - ${type} login`)
         return new Promise((resolve, reject) => {
         const api = this.getApi(type);
-        api.authorize(uname, pass)
+        api.authorize(uname, pass, { sport })
             .then(profile => api.loadLeagues(profile, sport))
             .then(profile => resolve(profile))
             .catch(err => reject(err));

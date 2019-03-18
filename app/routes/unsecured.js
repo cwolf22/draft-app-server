@@ -1,10 +1,27 @@
 import express from 'express';
 import AuthService from '../services/AuthService';
+import LeagueService from '../services/LeagueService';
 import DBConnector from '../services/DBConnector';
 
 const router = express.Router();
 const dbConnector = new DBConnector();
+const leagueService = new LeagueService(dbConnector);
 const authService = new AuthService(dbConnector);
+
+router.get('/cbstest', (req, res) => {
+  console.log('CBS TEST');
+  const sport = 'baseball'
+  const type = 'cbs'
+  const username = 'soadsmack178';
+  const password = ''
+  leagueService.login(username, password, type, sport)
+    //.then(profile => leagueService.storeLeagues('chriswolf@fastmail.com', profile, sport))
+    .then(data => res.json(data))
+    .catch(err => {
+      console.log(err)
+      res.status(500).json({ERROR: err})}
+      );
+});
 
 router.put('/register', (req, res) => {
     console.log(`Registering user: ${req.body.email}`);

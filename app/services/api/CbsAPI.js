@@ -58,7 +58,7 @@ export default class CbsAPI {
                         console.log('[cbs api] - submit login form')
                         await page.$eval(CbsAPI.login.form, form => form.submit());
                         await page.waitForNavigation();
-                        console.log(`[cbs api] - Login Successful. Get access_tokens`);
+                        console.log(`[cbs api] - Login Complete. Get access_tokens`);
                         await page.waitForSelector(CbsAPI.teams.waitSelector);
                         const tokens = await this.getAllTokens(page, options);
                         console.log(`[cbs api] - ${tokens.length} valid leagues`);
@@ -81,7 +81,7 @@ export default class CbsAPI {
         return new Promise((resolve,reject) => {            
             const actions = profile.tokens.map(async details => {
                 const ownerUrl = `${CbsAPI.api.owners}?${CbsAPI.api.params}&access_token=${details.token}`;
-                console.log(`[espn api] - making owner request: ${ownerUrl}`)
+                console.log(`[cbsi api] - making owner request: ${ownerUrl}`)
                 const ownerResp = await axios.get(ownerUrl);
                 const owners = ownerResp.data.body.owners;
                 const owner = owners.find(m => m.logged_in_owner);
@@ -93,7 +93,7 @@ export default class CbsAPI {
                     sport
                 });
                 const rosterUrl = `${CbsAPI.api.rosters}?${CbsAPI.api.params}&team_id=all&access_token=${details.token}`;
-                console.log(`[espn api] - making roster request: ${rosterUrl}`)
+                console.log(`[cbsi api] - making roster request: ${rosterUrl}`)
                 const rosterResp = await axios.get(rosterUrl);
                 return {rosters: rosterResp.data.body.rosters, owners, details}
             });

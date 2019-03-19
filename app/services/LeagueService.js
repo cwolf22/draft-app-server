@@ -16,6 +16,7 @@ export default class LeagueService {
         return new Promise((resolve, reject) => {
         const api = this.getApi(type);
         api.authorize(uname, pass, { sport })
+        //TODO: Builder and class for conforming league data
             .then(profile => api.loadLeagues(profile, sport))
             .then(profile => resolve(profile))
             .catch(err => reject(err));

@@ -31,6 +31,8 @@ export default class CbsAPI {
         football: 'sports-football'
     }
 
+    static allowedTypes = ['mgmt', ]
+
     constructor() {
         if (CbsAPI.instance) return CbsAPI.instance;
         CbsAPI.instance = this;
@@ -59,6 +61,7 @@ export default class CbsAPI {
                         console.log(`[cbs api] - Login Successful. Get access_tokens`);
                         await page.waitForSelector(CbsAPI.teams.waitSelector);
                         const tokens = await this.getAllTokens(page, options);
+                        console.log(`[cbs api] - ${tokens.length} valid leagues`);
                         resolve(new CbsProfile(user, tokens));
                     } catch (err) {
                         console.log(err);
@@ -86,7 +89,7 @@ export default class CbsAPI {
                     leagueId: details.leagueId,
                     ownerId: owner.id,
                     type: profile.type,
-                    teamId: owner.team.id,
+                    teamId: parseInt(owner.team.id),
                     sport
                 });
                 const rosterUrl = `${CbsAPI.api.rosters}?${CbsAPI.api.params}&team_id=all&access_token=${details.token}`;
@@ -96,9 +99,9 @@ export default class CbsAPI {
             });
             Promise.all(actions).then(arr => {
                 const leagues = arr.map(data => {
-                    console.log(`[cbs api] - mutate league:`);
+                    console.log(`[cbs api] - mutate league`);
                     const teams = data.rosters.teams.map(team => this.mapTeamData(team, data.owners));
-                    console.log(teams)
+
                     return new League(profile.type, { 
                         user: profile.user,
                         details: data.details,
@@ -106,18 +109,21 @@ export default class CbsAPI {
                         sport 
                     });
                 });
-                resolve(leagues);
+                profile.leagues = leagues;
+                resolve(profile);
             });
         })
     }
 
     //TODO MAP OWNERS TO TEAM
     mapTeamData(team, ownersList) {
-        const owners = ownersList.filter(owner => owner.team.id === team.id).map(owner => {
+        const owners = ownersList.filter(owner => owner.team.id == team.id).map(ownerObj => {
+            const owner = Object.assign({}, ownerObj);
+            const name = owner.name.split(' ');
             owner.isLeagueManager = owner.commissioner == 1;
             owner.displayName = owner.name;
-            owner.firstName = owner.displayName.split(' ')[0];
-            owner.lastName = owner.displayName.split(' ')[1];
+            owner.firstName = name.length > 0 ? name[0] : '';
+            owner.lastName = name.length > 1 ? name[1] : '';
             delete owner.name;
             delete owner.team;
             delete owner.commissioner;
@@ -125,17 +131,28 @@ export default class CbsAPI {
             return owner;
         });
         
-        console.log(owners)
         const roster = team.players.map(player => {
             return {
-                id: player.playerId,
+                id: parseInt(player.id),
                 firstName: player.firstname,
                 lastName: player.lastname,
                 fullName: player.fullname
             }
         });
+        
         team.owners = owners;
         team.roster = roster;
+        team.id = parseInt(team.id);
+        team.abbrev = team.abbr;
+        delete team.abbr;
+        delete team.projected_points;
+        delete team.lineup_status;
+        delete team.players;
+        delete team.warning;
+        delete team.point;
+        delete team.long_abbr;
+        delete team.short_name;
+        delete team.division;
         return team;
 }
 
@@ -147,26 +164,32 @@ export default class CbsAPI {
         const tokens = [];
         let teamsList = await page.$$(`${CbsAPI.teams.prefixSelector}${options.sport}${CbsAPI.teams.suffixSelector}`);
         console.log(`[cbs api] - found ${teamsList.length} team(s)`);
+        const hrefs = [];
         for (let i = 0; i < teamsList.length; i++) {
             const prop = await teamsList[i].getProperty('href');
             const href = await prop.jsonValue();
-            console.log(`[cbs api] - navigate to ${href} to get access_token`);
-            const token = await this.getAccessToken(page, href);
-            console.log(`[cbs api] - retrieved token details:${JSON.stringify(token)}`)
+            hrefs.push(href);
+        }
+        for (let i = 0; i <hrefs.length; i++) {
+            console.log(`[cbs api] - navigate to ${hrefs[i]} to get check league type and access_token`);
+            const token = await this.getAccessToken(page, hrefs[i]);
             tokens.push(token);
         }
-        return tokens;
+        return tokens.filter(token => CbsAPI.allowedTypes.includes(token.leagueType));
     }
 
     async getAccessToken(page, href) {
         await page.goto(href);
-        await page.screenshot({path: 'zzz.png'});
-        const token = await page.evaluate(() => window.CBSi.token);
-        return {
-            token: token,
-            league: href,
-            leagueId: href.replace(/(^\w+:|^)\/\//, '').split(".")[0]
-        }
+        const details = await page.evaluate(() => {
+            return {
+                token: window.CBSi.token,
+                leagueId: window.FANTASY_LEAGUE_JS_GLOBALS.leagueId,
+                leagueType: window.FANTASY_LEAGUE_JS_GLOBALS.leagueType,
+                leagueName: window.FANTASY_LEAGUE_JS_GLOBALS.leagueName
+            };
+        });
+        details.href = href;
+        return details;
     }
 
 }

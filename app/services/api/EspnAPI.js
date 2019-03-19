@@ -149,8 +149,12 @@ export default class EspnAPI {
                     fullName: pmeta.fullName
                 }
             });
+            team.name = `${team.location} ${team.nickname}`
             team.owners = owners;
             team.roster = roster;
+            delete team.logoType;
+            delete team.nickname;
+            delete team.location;
             return team;
     }
 }

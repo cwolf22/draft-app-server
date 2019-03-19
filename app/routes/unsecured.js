@@ -13,7 +13,7 @@ router.get('/cbstest', (req, res) => {
   const sport = 'football'
   const type = 'cbs'
   const username = 'soadsmack178';
-  const password = 'biggly'
+  const password = ''
   leagueService.login(username, password, type, sport)
     .then(profile => leagueService.storeLeagues('chriswolf@fastmail.com', profile, sport))
     .then(data => res.json(data))

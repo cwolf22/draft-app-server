@@ -20,7 +20,7 @@ export default class AuthService {
     }
 
     async login(user, password) {
-        console.log(`[AuthService :: ${user}] - Login`)
+        console.log(`[AuthService :: ${user}] - Login`);
         const document = await this.dbConnector.getUser(user);
         const hash = document.get('hash');
         if (hash && bcrypt.compareSync(password, hash)) return hash;
@@ -28,8 +28,9 @@ export default class AuthService {
         throw {status: 401, message: 'Username or password is incorrect'};
     }
 
-    generateToken(email, hash) {
-        console.log(`[AuthService :: ${user}] - Generate JWT`)
-        return jwt.sign({ email, hash }, config.secrets.JWT, { expiresIn: '24h' });
+    //TODO: come up with proper token expiration and refresh strategy
+    generateToken(user, hash) {
+        console.log(`[AuthService :: ${user}] - Generate JWT`);
+        return jwt.sign({ user, hash }, config.secrets.JWT, { expiresIn: '356d' });
     }
 }

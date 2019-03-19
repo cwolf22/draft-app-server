@@ -17,7 +17,8 @@ export default class EspnAPI {
     //http://fantasy.espn.com/apis/v3/games/flb/seasons/2019/segments/0/leagues/2136?view=mRoster&view=modular&view=mNav
     static api = {
         v3: { 
-            base: `http://fantasy.espn.com/apis/v3/games/flb/seasons/${new Date().getFullYear()}/segments/0/leagues/`,
+            base: 'http://fantasy.espn.com/apis/v3/games/',
+            intermediate: `/seasons/${new Date().getFullYear()}/segments/0/leagues/`,
             params: 'view=mRoster&view=modular&view=mNav'
         },
         v2_fan: { 
@@ -28,7 +29,7 @@ export default class EspnAPI {
     }
     static sportMapping = {
         baseball: 'FLB',
-        football: 'FLL'
+        football: 'FFL'
     }
 
     constructor() {
@@ -119,7 +120,7 @@ export default class EspnAPI {
                         teamId: entry.entryId,
                         sport   
                     })
-                    const url = `${EspnAPI.api.v3.base}${entry.groups[0].groupId}?${EspnAPI.api.v3.params}`;
+                    const url = `${EspnAPI.api.v3.base}${abbrev.toLowerCase()}${EspnAPI.api.v3.intermediate}${entry.groups[0].groupId}?${EspnAPI.api.v3.params}`;
                     console.log(`[espn api] - making league request: ${url}`)
                     return axios.get(url, { headers: { Cookie: profile.getCookieString()}});
                 })

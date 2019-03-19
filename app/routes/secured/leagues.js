@@ -19,6 +19,7 @@ router.post('/:user/:sport', (req, res) => {
   const type = req.body.type.toLowerCase();
   leagueService.login(req.body.username, req.body.password, type, sport)
     .then(profile => leagueService.storeLeagues(req.params.user, profile, sport))
+    .then(profile => leagueService.mapLeagueResponse(profile))
     .then(data => res.json(data))
     .catch(err => {
       console.log(err)

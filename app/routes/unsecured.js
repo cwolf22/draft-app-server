@@ -10,12 +10,13 @@ const authService = new AuthService(dbConnector);
 
 router.get('/cbstest', (req, res) => {
   console.log('CBS TEST');
-  const sport = 'football'
-  const type = 'cbs'
-  const username = 'soadsmack178';
+  const sport = 'baseball'
+  const type = 'espn'
+  const username = 'cliffhanger178';
   const password = ''
   leagueService.login(username, password, type, sport)
     .then(profile => leagueService.storeLeagues('chriswolf@fastmail.com', profile, sport))
+    .then(profile => leagueService.mapLeagueResponse(profile))
     .then(data => res.json(data))
     .catch(err => {
       console.log(err)

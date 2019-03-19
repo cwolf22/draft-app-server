@@ -38,23 +38,27 @@ export default class DBConnector {
         return doc.data();
     }
 
-    storeLeague(league) {
+    storeLeague(league, addedFields = {}) {
         console.log(`[DBConnector] - Store League: leagues/${league.sport}/${league.type}`);
         const db = admin.firestore().collection(`leagues/${league.sport}/${league.type}`);
-            return db.doc(league.id.toString()).set({ ...league, ts: admin.firestore.Timestamp.fromDate(new Date()) });  
+            return db.doc(league.id.toString()).set({ ...league, ...addedFields });  
     }
 
-    storeUserDetails(user, details) {
+    storeUserDetails(user, details, addedFields = {}) {
         console.log(`[DBConnector] - Store League for User: users/${user.toLowerCase()}/leagues/`);
+        const ts = admin.firestore.Timestamp.fromDate(new Date());
         const db = admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`); 
         return db.doc(details.leagueId.toString()).set({
-            ts: admin.firestore.Timestamp.fromDate(new Date()),
+            ...addedFields,
             leagueId: details.leagueId,
             teamId: details.teamId,
             ownerId: details.ownerId,
             sport: details.sport,
             type: details.type
         }); 
+    }
 
+    getTimestamp() {
+        return admin.firestore.Timestamp.fromDate(new Date());
     }
 }

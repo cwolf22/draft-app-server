@@ -55,14 +55,33 @@ export default class LeagueService {
         return new Promise((resolve, reject) => {
             profile.leagues.forEach(async league => {
                 try {
+                    const ts = this.dbConnector.getTimestamp();
+                    league.ts = ts;
                     await this.dbConnector.storeLeague(league);
                     const details = profile.playerDetails.find(pd => league.id == pd.leagueId);
                     await this.dbConnector.storeUserDetails(user, details);
-                    resolve(profile.leagues);
                 } catch (err) {
                     reject(err);
                 }
             })
+            resolve(profile);
+        });
+    }
+
+    mapLeagueResponse(profile) {
+        console.log(`[LeagueService :: ${profile.user}] - map leagues reponse`);
+        return new Promise((resolve, reject) => {
+            const response = profile.leagues.map(league => {
+                const userLgInfo = profile.playerDetails.find(details => details.leagueId == league.id);
+                return {
+                  ...league,
+                  type: userLgInfo.type,
+                  sport: userLgInfo.sport,
+                  teamId: userLgInfo.teamId,
+                  ownerId: userLgInfo.ownerId
+                }
+            });
+            resolve(response);
         });
     }
 

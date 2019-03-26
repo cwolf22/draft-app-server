@@ -27,6 +27,11 @@ export default class EspnAPI {
             params: 'displayEvents=true&displayNow=true&displayRecs=true&recLimit=5&userId=%7BB89096F2-E5B9-4541-A5E3-6BC80F22D56E%7D&context=fantasy&source=espncom-fantasy&lang=en&section=espn&region=us'
         }
     }
+
+    static playersUrl = {
+        baseball: 'http://fantasy.espn.com/apis/v3/games/flb/seasons/2019/players?view=players_wl',
+    };
+
     static sportMapping = {
         baseball: 'FLB',
         football: 'FFL'
@@ -35,6 +40,10 @@ export default class EspnAPI {
     constructor() {
         if (EspnAPI.instance) return EspnAPI.instance;
         EspnAPI.instance = this;
+    }
+
+    getPlayerList() {
+        return axios.get(EspnAPI.playersUrl.baseball);
     }
 
     authorize(user, pass, options = {}) {

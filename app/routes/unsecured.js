@@ -2,12 +2,15 @@ import express from 'express';
 import AuthService from '../services/AuthService';
 import LeagueService from '../services/LeagueService';
 import DBConnector from '../services/DBConnector';
+import ESPNTransactionService from '../services/ESPNTransactionService';
+import GoogleSheetsAPI from '../services/api/GoogleSheetsAPI'
 
 const router = express.Router();
 const dbConnector = new DBConnector();
 const leagueService = new LeagueService(dbConnector);
 const authService = new AuthService(dbConnector);
-
+const gsAPI = new GoogleSheetsAPI();
+/*
 router.get('/cbstest', (req, res) => {
   console.log('CBS TEST');
   const sport = 'baseball'
@@ -23,6 +26,19 @@ router.get('/cbstest', (req, res) => {
       res.status(500).json({ERROR: err})}
       );
 });
+*/
+
+if (!String.prototype.format) {
+  String.prototype.format = function() {
+    var args = arguments;
+    return this.replace(/{(\d+)}/g, function(match, number) { 
+      return typeof args[number] != 'undefined'
+        ? args[number]
+        : match
+      ;
+    });
+  };
+}
 
 router.put('/register', (req, res) => {
     console.log(`Registering user: ${req.body.email}`);
@@ -44,6 +60,27 @@ router.post('/login', (req, res) => {
         res.json({data:{ token } })
       })
       .catch(err => res.status(err.status).json({error: err}));
+});
+
+router.get('/valid-transactions/:id/:tab', (req, res) => {
+  console.log(`Test Transactions`);
+  const tranService = new ESPNTransactionService();
+  tranService.storePlayers()
+    .then(() => tranService.getTransactions())
+    .then(transactions => tranService.modelData(transactions))
+    .then(async players => {
+      const gdoc = await gsAPI.authorize(req.params.id);
+      const rows = await gsAPI.getRows(gdoc,req.params.tab)
+      return {players, rows}
+    })
+    .then(data => tranService.compareAndRepsond(data.players, data.rows))
+    .then(resp => res.json(resp))
+    .catch(err => {
+      res.status(500);
+      if (err.status) res.status(err.status);
+      const error = err.constructor == Array || err.constructor == String || err.constructor == Object ? err : {data:err}
+      res.json(error)
+    });
 });
 
 export default router;

@@ -4,8 +4,10 @@ var xhr = new XMLHttpRequest();
 xhr.open('GET', url, false);
 xhr.send(null);
 
-console.log("response:")
-console.log(xhr.responseText)
+console.log("\n-----------------");
+console.log("- R E S P O N S E")
+console.log("-----------------\n");
+console.log(xhr.responseText + '\n')
 
 if (xhr.status == 409) {
     process.exit(1)

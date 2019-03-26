@@ -10,10 +10,3 @@ console.log(xhr.responseText)
 if (xhr.status == 409) {
     process.exit(1)
 }
-
-
-
-
-
-
-

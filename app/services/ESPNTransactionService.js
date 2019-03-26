@@ -26,7 +26,6 @@ export default class ESPNTransactionService {
     constructor() {
         this.espnAPI = new EspnAPI();
         this.config = ESPNTransactionService.transaction.config;
-        this.location =  `${config.fs.PLAYERS.baseball}/players.json`;
         this.players = [];
     }
 

@@ -27,7 +27,7 @@ export default class ESPNTransactionService {
     }
 
     storePlayers() {
-        console.log("store Players")
+        console.log("Get Players")
         return new Promise((resolve, reject) => {
             this.espnAPI.getPlayerList()
                 .then(response => {
@@ -45,7 +45,7 @@ export default class ESPNTransactionService {
         const _config = Object.assign({}, this.config);
         const startTime = new Date();
         const endTime = new Date();
-        startTime.setHours(-24, -30, 0, 0);
+        startTime.setHours(0, 0, 0, 0);
         _config.headers['X-Fantasy-Filter'] = `{"topics":{"filterType":{"value":["ACTIVITY_TRANSACTIONS"]},"limit":100,"limitPerMessageSet":{"value":100},"offset":0,"sortMessageDate":{"sortPriority":1,"sortAsc":false},"sortFor":{"sortPriority":2,"sortAsc":false},"filterDateRange":{"value":${startTime.getTime()},"additionalValue":${endTime.getTime()}},"filterIncludeMessageTypeIds":{"value":[178,180]}}}`
         const resp =  await axios.get('http://fantasy.espn.com/apis/v3/games/flb/seasons/2019/segments/0/leagues/49976/communication/?view=kona_league_communication', _config);
         return resp.data;
@@ -56,6 +56,7 @@ export default class ESPNTransactionService {
            const player = this.players.find(p => p.id == t.messages[0].targetId);
            return {...player, date: t.date};
        });
+       console.log(mapped)
        return mapped;
     }
 
@@ -63,7 +64,7 @@ export default class ESPNTransactionService {
         return new Promise((resolve, reject) => {
             const illegalTransactions = transactions.map(tr => {
                 console.log(tr)
-                const row = rows.find(row => tr.fullName == row.player);
+                const row = rows.find(row => tr.fullName.trim() == row.player.trim());
                 if (row) return { owner: row.owner, player:row.player }
                 return null;
             }).filter(action => action != null);

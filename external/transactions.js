@@ -3,12 +3,14 @@ var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var xhr = new XMLHttpRequest();
 xhr.open('GET', url, false);
 xhr.send(null);
+var json = JSON.parse(xhr.responseText)
 
-console.log("\n-----------------");
-console.log("- R E S P O N S E")
-console.log("-----------------\n");
-console.log(xhr.responseText + '\n')
+console.log("\n------------------");
+console.log("- R E S P O N S E");
+console.log("------------------\n");
+console.log(JSON.stringify(json, null, 2));
+console.log('\n');
 
 if (xhr.status == 409) {
-    process.exit(1)
+    process.exit(1);
 }

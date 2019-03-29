@@ -13,10 +13,10 @@ const gsAPI = new GoogleSheetsAPI();
 
 router.get('/test/:site', (req, res) => {
   console.log(`${req.params.site} TEST`);
-  const sport = 'baseball'
+  const sport = 'football'
   const type = req.params.site;
-  const username = 'cliffhanger178';
-  const password = 'hilliard1';
+  const username = 'soadsmack178';
+  const password = 'biggly';
   const member = 'chriswolf@fastmail.com';
 
   leagueService.login(member, {username, password}, {type, sport})

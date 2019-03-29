@@ -20,6 +20,7 @@ router.get('/test/:site', (req, res) => {
   const member = 'chriswolf@fastmail.com';
 
   leagueService.login(member, {username, password}, {type, sport})
+    .then(profile => leagueService.loadLeagues(profile, {type, sport}))
     .then(profile => leagueService.storeLeagues(member, profile, sport))
     .then(profile => leagueService.mapLeagueResponse(profile))
     .then(data => res.json(data))
@@ -53,9 +54,9 @@ router.post('/login', (req, res) => {
 
 router.get('/valid-transactions/:id/:tab', (req, res) => {
   console.log(`Test Transactions`);
-  const tranService = new ESPNTransactionService();
+  const tranService = new ESPNTransactionService(dbConnector);
   tranService.storePlayers()
-    .then(() => tranService.getTransactions())
+    .then(() => tranService.getTransactions({type: 'espn', sport: 'baseball'}))
     .then(transactions => tranService.modelData(transactions))
     .then(async players => {
       const gdoc = await gsAPI.authorize(req.params.id);

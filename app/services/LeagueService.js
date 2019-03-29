@@ -11,16 +11,16 @@ export default class LeagueService {
         LeagueService.instance = this;
     }
 
-    login(member, credentials, meta) {
+    async login(member, credentials, meta) {
         console.log(`[LeagueService :: ${member}] - ${meta.type} login`)
-        return new Promise((resolve, reject) => {
-            const api = this.getApi(meta.type);
-            api.authorize(member, credentials, { sport: meta.sport, dbConnector: this.dbConnector })
-            //TODO: Builder and class for conforming league data
-                .then(profile => api.loadLeagues(profile, sport))
-                .then(profile => resolve(profile))
-                .catch(err => reject(err));
-        });
+        const api = this.getApi(meta.type);
+        return await api.authorize(member, credentials, { sport: meta.sport, dbConnector: this.dbConnector });
+    }
+
+    async loadLeagues(profile, meta) {
+        console.log(`[LeagueService] - Load Leagues login`)
+        const api = this.getApi(meta.type);
+        return await api.loadLeagues(profile, meta.sport);
     }
 
     getLeagues(user) {

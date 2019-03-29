@@ -60,12 +60,11 @@ export default class EspnAPI {
             const auth = auths.find(record => record.authorization);
             if (auth) {
                 console.log('[espn api] - returning stored authorization');
-                //TODO: WORKING IN HERUE
-                console.log(typeof(auth.authorization));
-                return new EspnProfile(member, auth.authorization, false);
+                return new EspnProfile(credentials.username, auth.authorization, false);
             }
         }
-        return this.reAuthorize(user, pass);
+        console.log('[espn api] - No stored authorization -- fire up login form');
+        return await this.reAuthorize(credentials.username, credentials.password);
     }
 
     //TODO: clean this crap up
@@ -114,7 +113,7 @@ export default class EspnAPI {
     loadLeagues(profile, sport) {
         console.log(`[espn api] - loading ${sport} leagues from cookies`);
         return new Promise((resolve, reject) => {
-            const url = `${EspnAPI.api.v2_fan.base}${profile.cookies.swid.value}?${EspnAPI.api.v2_fan.params}`;
+            const url = `${EspnAPI.api.v2_fan.base}${profile.getSWID()}?${EspnAPI.api.v2_fan.params}`;
             console.log(`[espn api] - making request for fan data: ${url}`)
             axios.get(url, { headers: { Cookie: profile.getCookieString()}})
                 .then(response => {
@@ -142,7 +141,7 @@ export default class EspnAPI {
                     const entry = resp.metaData.entry;
                     profile.playerDetails.push({
                         leagueId: entry.groups[0].groupId,
-                        ownerId: profile.cookies.swid.value,
+                        ownerId: profile.getSWID(),
                         type: profile.type,
                         teamId: entry.entryId,
                         authorization: profile.cookies,

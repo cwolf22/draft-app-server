@@ -15,16 +15,19 @@ router.get('/:user' , (req, res) => {
 
 router.post('/:user/:sport', (req, res) => {
   console.log(`Import: [${req.params.user}] - ${req.params.sport}`)
-  const sport = req.body.sport.toLowerCase();
-  const type = req.body.type.toLowerCase();
-  leagueService.login(req.body.username, req.body.password, type, sport)
-    .then(profile => leagueService.storeLeagues(req.params.user, profile, sport))
+  const meta = {
+    sport: req.body.sport.toLowerCase(),
+    type: req.body.type.toLowerCase()
+  }
+  leagueService.login(req.params.user, {username: req.body.username, password: req.body.password}, meta)
+    .then(profile => leagueService.loadLeagues(profile, meta))
+    .then(profile => leagueService.storeLeagues(member, profile, meta.sport))
     .then(profile => leagueService.mapLeagueResponse(profile))
     .then(data => res.json(data))
     .catch(err => {
-      console.log(err)
-      res.status(500).json({ERROR: err})}
-      );
+      console.log(err);
+      res.status(500).json({ERROR: err});
+    });
 });
 
 export default router;

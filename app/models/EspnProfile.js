@@ -1,17 +1,23 @@
 export default class EspnProfile {
+
+    static authCookies = ['SWID','espn_s2'];
+    
     constructor(user, cookies = [], freshLogin = true) {
         this.freshLogin = true;
         this.type = 'espn';
         this.user = user;
-        this.cookies = {
-            swid: cookies.find(c => c.name == 'SWID'),
-            espn_s2: cookies.find(c => c.name == 'espn_s2')
-        }
+        this.cookies = EspnProfile.authCookies.map(cname => cookies.find(c => c.name == cname));
         this.leagues = [];
         this.playerDetails = [];
     }
 
+    getSWID() {
+        const cookie = this.cookies.find(c => c.name == 'SWID');
+        return cookie.value;
+    }
+
     getCookieString() {
-        return `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`
+        const cookieArr = this.cookies.map(cookie => `${cookie.name}=${cookie.value}`);
+        return cookieArr.join('; ');
     }
 }

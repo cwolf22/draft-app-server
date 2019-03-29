@@ -44,15 +44,25 @@ export default class CbsAPI {
         CbsAPI.instance = this;
     }
 
-    authorize(user, pass, options = {}) {
-        console.log(`[cbs api] - authorize ${user}`);
-        return new Promise((resolve, reject) => { 
-            const sportId = CbsAPI.sportMapping[options.sport];
-            if (!sportId) {
-                console.log(`[cbs api] - ${options.sport} is not currently supported`);
-                reject(`${sport} is not currently supported`);
-                return;
+    async authorize(member, credentials = {}, options = {}) {
+        console.log(`[cbs api] - authorize ${member}`);
+        /*
+        if (options.dbConnector) {
+            const auths = await options.dbConnector.getUserAuthorizations(member, credentials, {sport: options.sport, type: 'cbs'});
+            const auth = auths.find(record => record.authorization);
+            if (auth) {
+                console.log('[cbs api] - returning stored authorization');
+                return new EspnProfile(credentials.username, auth.authorization, false);
             }
+        }
+        console.log('[cbs api] - No stored authorization -- fire up login form');
+         */
+        return await this.reAuthorize(credentials.username, credentials.password);
+    }
+
+    //TODO: Clean this crap up
+    async reAuthorize(user, pass) {
+        return new Promise((resolve, reject) => { 
             puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}).then(async browser => {
                 try {
                     const page = await browser.newPage();

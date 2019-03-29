@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import axios from 'axios';
 import EspnProfile from '../../models/EspnProfile';
 import League from '../../models/League';
+import config from '../../config';
 
 export default class EspnAPI {
     static instance;
@@ -39,6 +40,11 @@ export default class EspnAPI {
 
     constructor() {
         if (EspnAPI.instance) return EspnAPI.instance;
+
+        this.defaultCredentials = {
+            username: config.credentials.ESPN.username,
+            password: config.credentials.ESPN.password
+        }
         EspnAPI.instance = this;
     }
 
@@ -46,11 +52,28 @@ export default class EspnAPI {
         return axios.get(EspnAPI.playersUrl.baseball);
     }
 
-    authorize(user, pass, options = {}) {
-        console.log(`[espn api] - authorize ${user} : get login form...`);
+    
+    async authorize(member, credentials = {}, options = {}) {
+        console.log(`[espn api] - authorize ${member}`);
+        if (options.dbConnector) {
+            const auths = await options.dbConnector.getUserAuthorizations(member, credentials, {sport: options.sport, type: 'espn'});
+            const auth = auths.find(record => record.authorization);
+            if (auth) {
+                console.log('[espn api] - returning stored authorization');
+                //TODO: WORKING IN HERUE
+                console.log(typeof(auth.authorization));
+                return new EspnProfile(member, auth.authorization, false);
+            }
+        }
+        return this.reAuthorize(user, pass);
+    }
+
+    //TODO: clean this crap up
+    async reAuthorize(user, pass) {
         return new Promise((resolve, reject) => { 
             puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']}).then(async browser => {
                 try {
+                    console.log('[espn api] - get login form...')
                     const page = await browser.newPage();
                     try {
                         await page.goto(EspnAPI.login.page, {waitUntil : 'networkidle0'});
@@ -60,7 +83,7 @@ export default class EspnAPI {
                         const password = await myframe.$(EspnAPI.login.passwordSelector);
                         await email.type(user)
                         await password.type(pass)
-                        console.log('[espn api] - Submitting Form...');
+                        console.log('[espn api] - submitting form...');
                         await Promise.all([
                             myframe.click(EspnAPI.login.submitSelector, {waitUntil : 'networkidle0'}),
                             page.waitForNavigation( {timeout: 30000 }),
@@ -73,8 +96,7 @@ export default class EspnAPI {
                     try {
                         const cookies = await page.cookies();
                         console.log(`[espn api] - Login Successful. Returning ${cookies.length} cookies`);
-                        const profile = new EspnProfile(user, cookies);
-                        if (!profile.isAuthenticated()) throw `[espn api] - Unable to Authenticate ${user} through API`
+                        const profile = new EspnProfile(user, cookies, true);
                         resolve(profile);
                     } catch (err) {
                         console.log('[espn api] - Failure Fetching User Data');
@@ -92,10 +114,6 @@ export default class EspnAPI {
     loadLeagues(profile, sport) {
         console.log(`[espn api] - loading ${sport} leagues from cookies`);
         return new Promise((resolve, reject) => {
-            if (!profile.isAuthenticated()) {
-                reject("User Unauthenticated");
-                return;
-            }
             const url = `${EspnAPI.api.v2_fan.base}${profile.cookies.swid.value}?${EspnAPI.api.v2_fan.params}`;
             console.log(`[espn api] - making request for fan data: ${url}`)
             axios.get(url, { headers: { Cookie: profile.getCookieString()}})
@@ -114,7 +132,7 @@ export default class EspnAPI {
         });
     }
 
-    //TODO: Clean this up
+    //TODO: Clean this crap up
     parseResponse(profile, json = { preferences: []}, sport) {
         const abbrev = EspnAPI.sportMapping[sport];
         console.log(`[espn api] - Parse response for and find sports ${abbrev}`)
@@ -127,7 +145,9 @@ export default class EspnAPI {
                         ownerId: profile.cookies.swid.value,
                         type: profile.type,
                         teamId: entry.entryId,
-                        sport   
+                        authorization: profile.cookies,
+                        username: profile.user,
+                        sport
                     })
                     const url = `${EspnAPI.api.v3.base}${abbrev.toLowerCase()}${EspnAPI.api.v3.intermediate}${entry.groups[0].groupId}?${EspnAPI.api.v3.params}`;
                     console.log(`[espn api] - making league request: ${url}`)

@@ -26,6 +26,14 @@ export default class DBConnector {
         return users.doc(user.toLowerCase()).get();
     }   
 
+    async getUserAuthorizations(member, credentials, meta) {
+        console.log(`[DBConnector] - Get User Authorization: ${member}`);
+        const users = admin.firestore().collection(`users/${member}/leagues`);
+        const query = await users.where('username', '==', credentials.username).where('type', '==', meta.type).where('sport', '==', meta.sport);
+        const qr = await query.get();
+        return qr.docs.map(doc => doc.data());
+    }
+
     async getUserLeagues(user) {
         console.log(`[DBConnector] - Get User Leagues: ${user}`);
         const snapshot = await admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`).get();
@@ -50,11 +58,7 @@ export default class DBConnector {
         const db = admin.firestore().collection(`users/${user.toLowerCase()}/leagues/`); 
         return db.doc(details.leagueId.toString()).set({
             ...addedFields,
-            leagueId: details.leagueId,
-            teamId: details.teamId,
-            ownerId: details.ownerId,
-            sport: details.sport,
-            type: details.type
+            ...details
         }); 
     }
 

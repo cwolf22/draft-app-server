@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import axios from 'axios'
 import CbsProfile from "../../models/CbsProfile";
 import League from '../../models/League';
+import config from '../../config'
 
 export default class CbsAPI {
     static instance;
@@ -35,6 +36,11 @@ export default class CbsAPI {
 
     constructor() {
         if (CbsAPI.instance) return CbsAPI.instance;
+
+        this.defaultCredentials = {
+            username: config.credentials.CBS.username,
+            password: config.credentials.CBS.password
+        }
         CbsAPI.instance = this;
     }
 
@@ -90,6 +96,8 @@ export default class CbsAPI {
                     ownerId: owner.id,
                     type: profile.type,
                     teamId: parseInt(owner.team.id),
+                    authorization: details.token,
+                    username: profile.user,
                     sport
                 });
                 const rosterUrl = `${CbsAPI.api.rosters}?${CbsAPI.api.params}&team_id=all&access_token=${details.token}`;

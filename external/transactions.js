@@ -9,6 +9,6 @@ console.log("- R E S P O N S E")
 console.log("-----------------\n");
 console.log(xhr.responseText + '\n')
 
-if (xhr.status == 409) {
+if (xhr.status != 200) {
     process.exit(1)
 }

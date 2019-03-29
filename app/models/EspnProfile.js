@@ -1,5 +1,6 @@
 export default class EspnProfile {
-    constructor(user, cookies = []) {
+    constructor(user, cookies = [], freshLogin = true) {
+        this.freshLogin = true;
         this.type = 'espn';
         this.user = user;
         this.cookies = {
@@ -12,13 +13,5 @@ export default class EspnProfile {
 
     getCookieString() {
         return `${this.cookies.swid.name}=${this.cookies.swid.value}; ${this.cookies.espn_s2.name}=${this.cookies.espn_s2.value}`
-    }
-
-    /****************
-     * P R I V A T E
-     */
-
-    isAuthenticated() {
-        return (this.cookies.swid && this.cookies.espn_s2)
     }
 }

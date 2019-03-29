@@ -11,15 +11,15 @@ export default class LeagueService {
         LeagueService.instance = this;
     }
 
-    login(uname, pass, type, sport) {
-        console.log(`[LeagueService :: ${uname}] - ${type} login`)
+    login(member, credentials, meta) {
+        console.log(`[LeagueService :: ${member}] - ${meta.type} login`)
         return new Promise((resolve, reject) => {
-        const api = this.getApi(type);
-        api.authorize(uname, pass, { sport })
-        //TODO: Builder and class for conforming league data
-            .then(profile => api.loadLeagues(profile, sport))
-            .then(profile => resolve(profile))
-            .catch(err => reject(err));
+            const api = this.getApi(meta.type);
+            api.authorize(member, credentials, { sport: meta.sport, dbConnector: this.dbConnector })
+            //TODO: Builder and class for conforming league data
+                .then(profile => api.loadLeagues(profile, sport))
+                .then(profile => resolve(profile))
+                .catch(err => reject(err));
         });
     }
 
@@ -55,8 +55,7 @@ export default class LeagueService {
         return new Promise((resolve, reject) => {
             profile.leagues.forEach(async league => {
                 try {
-                    const ts = this.dbConnector.getTimestamp();
-                    league.ts = ts;
+                    league.ts = this.dbConnector.getTimestamp();
                     await this.dbConnector.storeLeague(league);
                     const details = profile.playerDetails.find(pd => league.id == pd.leagueId);
                     await this.dbConnector.storeUserDetails(user, details);

@@ -58,6 +58,7 @@ export default class LeagueService {
                     league.ts = this.dbConnector.getTimestamp();
                     await this.dbConnector.storeLeague(league);
                     const details = profile.playerDetails.find(pd => league.id == pd.leagueId);
+                    details.ts = league.ts;
                     await this.dbConnector.storeUserDetails(user, details);
                 } catch (err) {
                     reject(err);

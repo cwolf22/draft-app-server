@@ -4,6 +4,7 @@ import LeagueService from '../services/LeagueService';
 import DBConnector from '../services/DBConnector';
 import ESPNTransactionService from '../services/ESPNTransactionService';
 import GoogleSheetsAPI from '../services/api/GoogleSheetsAPI'
+import config from '../config'
 
 const router = express.Router();
 const dbConnector = new DBConnector();
@@ -11,13 +12,13 @@ const leagueService = new LeagueService(dbConnector);
 const authService = new AuthService(dbConnector);
 const gsAPI = new GoogleSheetsAPI();
 
-router.get('/test/:site', (req, res) => {
-  console.log(`${req.params.site} TEST`);
-  const sport = 'football'
+router.get('/test/:site/:sport', (req, res) => {
+  console.log(`${req.params.site} ${req.params.sport} TEST`);
+  const sport = req.params.sport
   const type = req.params.site;
-  const username = 'soadsmack178';
-  const password = 'biggly';
-  const member = 'chriswolf@fastmail.com';
+  const username = type == 'espn' ? config.credentials.ESPN.username : config.credentials.CBS.username;
+  const password = type == 'espn' ? config.credentials.ESPN.password : config.credentials.CBS.password;
+  const member = type == 'espn' ? config.credentials.ESPN.member : config.credentials.CBS.member;
 
   leagueService.login(member, {username, password}, {type, sport})
     .then(profile => leagueService.loadLeagues(profile, {type, sport}))

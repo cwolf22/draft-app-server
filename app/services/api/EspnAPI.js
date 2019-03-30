@@ -56,8 +56,8 @@ export default class EspnAPI {
     async authorize(member, credentials = {}, options = {}) {
         console.log(`[espn api] - authorize ${member}`);
         if (options.dbConnector) {
-            const auths = await options.dbConnector.getUserAuthorizations(member, credentials, {sport: options.sport, type: 'espn'});
-            const auth = auths.find(record => record.authorization);
+            const records = await options.dbConnector.getUserAuthorizations(member, credentials, {sport: options.sport, type: 'espn'});
+            const auth = records.find(record => record.authorization);
             if (auth) {
                 console.log('[espn api] - returning stored authorization');
                 return new EspnProfile(credentials.username, auth.authorization, false);

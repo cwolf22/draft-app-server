@@ -29,11 +29,8 @@ export default class DBConnector {
     async getUserAuthorizations(member, credentials, meta) {
         console.log(`[DBConnector] - Get User Authorization: ${member}`);
         const users = admin.firestore().collection(`users/${member}/leagues`);
-        console.log('got user item')
         const query = await users.where('username', '==', credentials.username).where('type', '==', meta.type).where('sport', '==', meta.sport);
-        console.log('run dat query')
         const qr = await query.get();
-        console.log(`result size: ${qr.size}`);
         return qr.docs.map(doc => doc.data());
     }
 

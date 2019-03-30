@@ -48,15 +48,16 @@ export default class CbsAPI {
         console.log(`[cbs api] - authorize ${member}`);
         
         if (options.dbConnector) {
-            const auths = await options.dbConnector.getUserAuthorizations(member, credentials, {sport: options.sport, type: 'cbs'});
-            const auth = auths.find(record => record.authorization);
-            console.log(auth);
-            /*
-            if (auth) {
-                console.log('[cbs api] - returning stored authorization');
-                return new EspnProfile(credentials.username, auth.authorization, false);
+            let allTokens = true;
+            const records = await options.dbConnector.getUserAuthorizations(member, credentials, {sport: options.sport, type: 'cbs'});
+            const auths = records.map(record => {
+                if (!record.authorization) allTokens = false;
+                return record.authorization;
+            });
+            if (auths.length > 0 && allTokens) {
+              console.log('[cbs api] - returning stored authorization');
+              return new CbsProfile(credentials.username, auths, false);
             }
-            */
         }
         console.log('[cbs api] - No stored authorization -- fire up login form');
         return await this.reAuthorize(credentials.username, credentials.password, options);
@@ -107,7 +108,7 @@ export default class CbsAPI {
                     ownerId: owner.id,
                     type: profile.type,
                     teamId: parseInt(owner.team.id),
-                    authorization: details.token,
+                    authorization: details,
                     username: profile.user,
                     sport
                 });
@@ -134,7 +135,7 @@ export default class CbsAPI {
         })
     }
 
-    //TODO MAP OWNERS TO TEAM
+    //TODO: OBJECT FOR MAPPING OWNERS TO TEAM
     mapTeamData(team, ownersList) {
         const owners = ownersList.filter(owner => owner.team.id == team.id).map(ownerObj => {
             const owner = Object.assign({}, ownerObj);
